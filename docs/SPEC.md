@@ -1,6 +1,6 @@
 # Pedidator: especificación de la prueba de concepto
 
-_Versión 3 · 21/11/2026 · Documento de partida para que Claude Code programe el proyecto por fases. El plan de ejecución paso a paso está en [ROADMAP.md](ROADMAP.md) y los detalles verificados de PocketBase en [POCKETBASE.md](POCKETBASE.md)._
+_Versión 4 · 21/11/2026 · Documento de partida para que Claude Code programe el proyecto por fases. El plan de ejecución paso a paso está en [ROADMAP.md](ROADMAP.md) y los detalles verificados de PocketBase en [POCKETBASE.md](POCKETBASE.md)._
 
 **Cambios respecto a la versión 1:** multiempresa, pedidos con artículos (precio por unidad o por kilo y peso), interfaz en catalán y castellano, historial de cambios, pedidos entregados archivados y visibles a petición, y dominio pendiente de decidir.
 
@@ -13,6 +13,14 @@ _Versión 3 · 21/11/2026 · Documento de partida para que Claude Code programe 
 - Valores de estado en inglés, kilos pedidos en gramos enteros, sin `photoThumb` en el servidor.
 - Detalles de sincronización: cursor, normalización de valores, borrado en cascada, cola por usuario.
 
+**Cambios respecto a la versión 3** (conversación con el carnicero, 21/11/2026):
+- **Para qué sirve la app:** preparar los encargos del día y entregarlos sabiendo quién viene, a qué hora y a por qué. La pantalla de inicio pasa a ser el **espacio de trabajo del día**, con barra de progreso de encargos preparados.
+- **Los precios no importan:** el precio de un artículo es opcional y está escondido. Las listas no enseñan importes.
+- **Pesos en gramos o en kilos**, con conversión automática. Se muestran en gramos hasta el kilo y en kilos a partir del kilo.
+- **"Preparar el día anterior"**: opción por artículo. Marca el día de recogida en el calendario con un color propio y hace que el artículo aparezca también la víspera, en las preparaciones de ese día.
+- "Preparado" deja de ser un estado guardado: un encargo está preparado cuando todos sus artículos están marcados.
+- Color de marca por empresa (`companies.brandColor`). Sistema de estilos en `docs/design/`.
+
 ---
 
 ## 1. Contexto y alcance
@@ -23,9 +31,11 @@ La versión anterior (hecha con herramientas de Google) no se reutiliza. Se empi
 
 ### Dentro del alcance
 - **Multiempresa**: cada usuario pertenece a una empresa y solo ve los datos de esa empresa. Los administradores de la plataforma ven todas.
-- Pedidos con fecha y hora de recogida y **artículos** con precio por unidad o por kilo y peso. Cada artículo se marca como preparado.
-- Calendario con los días que tienen pedidos y aviso de los días con pedidos importantes. Los pedidos entregados se archivan, pero se pueden mostrar.
-- Progreso de los pedidos del día y recuento mensual de pedidos entregados.
+- **Los dos objetivos principales:** (1) preparar los encargos del día y (2) entregarlos sabiendo quién viene, a qué hora y a por qué. Todo lo demás está al servicio de esto.
+- Pedidos (en la interfaz, **"encargos"**) con fecha y hora de recogida y **artículos** con cantidad en unidades o en peso. Cada artículo se marca como preparado. El precio es opcional.
+- **Espacio de trabajo del día**: los encargos del día por hora de recogida, qué falta por preparar, barra de progreso y las preparaciones que hay que dejar hechas para el día siguiente.
+- Calendario con los días que tienen pedidos, aviso de los días con pedidos importantes y color propio para los días con artículos que se preparan la víspera. Los pedidos entregados se archivan, pero se pueden mostrar.
+- Recuento mensual de pedidos entregados.
 - Tickets pendientes: cliente, importe, notas y foto, agrupados por cliente.
 - Ficha de cliente opcional: se crea sola con el nombre si no existe.
 - Multiusuario con login e **historial de cambios** (quién cambió qué y cuándo).
@@ -101,6 +111,7 @@ Campos comunes en **todas** las colecciones sincronizables:
 | `emailRecipients` | JSON (lista de correos) | N destinatarios del correo diario. |
 | `emailHour` | entero (0–23), por defecto 21 | |
 | `active` | booleano | |
+| `brandColor` | texto `#rrggbb`, opcional | Color de la empresa. La app deriva de él los cuatro colores de marca (`shared/theme.ts`, ver `docs/design/`). Vacío = app neutra. |
 | `lastSummaryDate` | texto `AAAA-MM-DD`, solo servidor | Último día (hora de Madrid) con resumen enviado. |
 | `summaryRetryAt` | fecha, solo servidor | Reintento pendiente del resumen. |
 
@@ -149,12 +160,12 @@ No hay registro público. Los superusuarios propios de PocketBase (`_superusers`
 |---|---|---|
 | `customer` | relación con `customers`, obligatoria | Se crea al vuelo si el nombre no existe. |
 | `pickupAt` | fecha y hora | Fecha y hora de recogida. Se guarda en UTC y se muestra en Europe/Madrid. |
-| `status` | `pending` \| `ready` \| `delivered` \| `cancelled` | Valores en inglés; las etiquetas (pendiente, preparado, entregado, cancelado) salen de las traducciones. `delivered` y `cancelled` = **archivado**. |
+| `status` | `pending` \| `delivered` \| `cancelled` | Valores en inglés; las etiquetas salen de las traducciones. `delivered` y `cancelled` = **archivado**. **"Preparado" no se guarda**: se calcula a partir de los artículos (ver "Progreso"). |
 | `deliveredAt` | fecha, opcional | Se rellena al pasar a `delivered`. |
 | `important` | booleano | Lo resalta en el calendario. |
 | `notes` | texto largo | |
 
-Los totales del pedido **no se guardan**: se calculan a partir de los artículos. Así no hay conflictos de "total" desactualizado.
+Ni el total ni el "preparado" del pedido **se guardan**: se calculan a partir de los artículos. Así dos dispositivos que marcan artículos distintos del mismo pedido nunca entran en conflicto.
 
 Borrar un pedido borra (lógicamente) sus artículos **en la misma transacción** del servidor, cada uno con su entrada en el historial. El dispositivo hace lo mismo en local al momento.
 
@@ -165,21 +176,40 @@ Sustituyen a las "tareas" de la versión 1: cada artículo se prepara y se marca
 |---|---|---|
 | `order` | relación con `orders` | |
 | `name` | texto | Por ejemplo, "Entrecot de ternera". Con sugerencias de los nombres ya usados en la empresa. |
-| `pricing` | `unit` \| `kg` | Precio por unidad o por kilo. |
-| `unitPriceCents` | entero | Precio por unidad o por kilo, en céntimos, IVA incluido. |
+| `measure` | `unit` \| `weight` | Cómo se pide: por unidades o por peso. |
 | `quantity` | entero ≥ 1, por defecto 1 | Solo `unit`: número de unidades. |
-| `orderedGrams` | entero, opcional | Solo `kg`: peso **pedido** (estimación), en gramos. Se introduce en kilos con coma (`1,5`) y se guarda `1500`. |
-| `weightGrams` | entero, opcional | Solo `kg`: peso **real** pesado al preparar, en gramos. |
+| `orderedGrams` | entero, opcional | Solo `weight`: peso pedido, **siempre en gramos**. Se puede dejar vacío ("un trozo de…"). |
+| `prepDayBefore` | booleano | **Preparar el día anterior.** Ver "Preparar la víspera". |
 | `done` | booleano | Preparado. |
 | `position` | número | Orden dentro del pedido. |
 | `notes` | texto, opcional | Por ejemplo, "fileteado fino". |
+| `unitPriceCents` | entero, opcional | Precio por unidad o por kilo, en céntimos, IVA incluido. **Opcional y escondido** (ver "Precio"). |
+| `weightGrams` | entero, opcional | Solo `weight`: peso real pesado al preparar. Opcional, junto al precio. |
 
-**Cálculo del importe de la línea** (una sola función compartida por la interfaz y el servidor, con pruebas):
-- `unit`: `quantity × unitPriceCents`.
-- `kg` con peso real: `Math.round(weightGrams × unitPriceCents / 1000)`.
-- `kg` sin peso real: estimación `Math.round(orderedGrams × unitPriceCents / 1000)`, mostrada como **"≈"**. Sin `orderedGrams`: 0 y "≈".
-- Todas las entradas son enteros no negativos: no hay aritmética con decimales. El medio céntimo redondea hacia arriba.
-- Total del pedido = suma de líneas. Si alguna línea es estimada, el total también se marca con "≈".
+Un artículo válido solo necesita `name`. En la interfaz un pedido se guarda con al menos un artículo.
+
+**Pesos** (funciones compartidas `parseWeight` y `formatWeight`, con pruebas):
+- **Entrada:** un campo numérico con un selector **g / kg**. `750` en g → 750; `1,5` en kg → 1500. Se acepta coma o punto. Si se escribe la unidad, manda lo escrito (`750g`, `1,5 kg`). En gramos solo enteros; en kilos hasta 3 decimales. Al cambiar el selector, el valor escrito se convierte (`1500` g ↔ `1,5` kg). Debajo del campo se muestra la equivalencia.
+- **Almacenamiento:** siempre gramos enteros.
+- **Visualización:** menos de 1000 g, en gramos (`750 g`); desde 1000 g, en kilos sin ceros de más (`1 kg`, `1,5 kg`, `2,48 kg`).
+- Al editar, el selector arranca en la unidad con la que se muestra el valor; en un artículo nuevo, en la última usada en el dispositivo.
+
+**Progreso** (funciones compartidas, con pruebas):
+- Un pedido está **preparado** cuando tiene al menos un artículo y todos sus artículos (no borrados) tienen `done`. Si se desmarca uno, deja de estarlo. No hay botón de "preparado".
+- Progreso del día = pedidos preparados o ya entregados ÷ pedidos del día no cancelados.
+
+**Preparar la víspera** (`prepDayBefore`):
+- El día de preparación es el **día natural anterior** al de recogida, en hora de Madrid. No se tienen en cuenta días de cierre.
+- El **día de recogida** se marca en el calendario con un color propio (distinto del de "importante"; pueden coincidir los dos).
+- En el espacio de trabajo de la víspera, el artículo aparece en la sección **"Preparar hoy para mañana"**, con el cliente y la hora de recogida. Marcarlo ahí marca el artículo (`done`): es el mismo artículo, no una tarea aparte.
+- El día de recogida, si el artículo sigue sin marcar, se muestra con el aviso _"Había que prepararlo ayer"_.
+- Las sugerencias de nombre recuerdan la última vez: al elegir un nombre ya usado se propone su `measure` y su `prepDayBefore`.
+
+**Precio** (opcional; una sola función compartida, con pruebas):
+- El formulario del artículo enseña nombre, cantidad, notas y "preparar el día anterior". Precio y peso real están en un desplegable **"Precio"**, cerrado por defecto.
+- Línea sin `unitPriceCents`: sin importe. `unit`: `quantity × unitPriceCents`. `weight` con peso real: `Math.round(weightGrams × unitPriceCents / 1000)`. `weight` sin peso real: estimación con `orderedGrams`, mostrada como **"≈"**.
+- Todas las entradas son enteros no negativos: no hay aritmética con decimales.
+- El total del pedido solo se muestra **dentro del pedido** y solo si alguna línea tiene precio; si otras no lo tienen, se indica cuántas. Las listas y el espacio de trabajo no enseñan importes.
 
 ### `tickets` (deudas)
 | Campo | Tipo | Notas |
@@ -316,22 +346,28 @@ Respuesta de la subida: `{ results: [{ opId, status, ... }] }` con `status` = `o
 
 ## 5. Pantallas y funcionalidad
 
-Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por defecto, el de la empresa. Todos los textos van en archivos de traducción, uno por pantalla e idioma (`src/i18n/ca/*.json`, `src/i18n/es/*.json`); ningún texto escrito directamente en los componentes. Primero móvil, con dos columnas en iPad horizontal y escritorio.
+Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por defecto, el de la empresa. Todos los textos van en archivos de traducción, uno por pantalla e idioma (`src/i18n/ca/*.json`, `src/i18n/es/*.json`); ningún texto escrito directamente en los componentes. Primero móvil, con dos columnas en iPad horizontal y escritorio. En la interfaz los pedidos se llaman **"encargos"** (ca: "encàrrecs"); en el código, `orders`. El aspecto (colores, tipografía, tamaños táctiles, componentes) sigue el sistema de estilos de `docs/design/`.
 
 1. **Login.**
-2. **Pedidos (inicio)**
-   - Calendario mensual: los días con pedidos llevan un punto y los días con pedidos importantes, un color destacado.
-   - Por defecto **solo pedidos activos** (`pending` y `ready`). Un interruptor **"Mostrar entregados"** añade los archivados al calendario y a la lista, en gris y tachados, y se recuerda en el dispositivo.
-   - Lista de pedidos del día seleccionado, por hora de recogida: cliente, n.º de artículos preparados, total (≈ si es estimado). Se pueden marcar los artículos desde la propia lista.
-   - Progreso del día ("5/8 pedidos preparados") y recuento de pedidos entregados en el mes.
-   - Botón **Nuevo pedido**.
+2. **Día (inicio): el espacio de trabajo**
+   - Se abre en **hoy**. Arriba, el día y cómo moverse: anterior, siguiente, "Hoy" y el calendario (la semana en móvil, el mes en tablet).
+   - **Barra de progreso**: _"3 de 8 encargos preparados"_, y debajo cuántos quedan por preparar y cuántos se han entregado.
+   - **Próxima recogida**: el siguiente encargo sin entregar, con su hora y cliente, destacado.
+   - **Encargos del día por hora de recogida.** Cada uno muestra hora (lo más grande), cliente, sus artículos con cantidad (`2,5 kg`, `750 g`, `6 u`) y notas, y su estado: por preparar, **preparado**, entregado. **Los artículos se marcan desde aquí**, sin abrir el encargo. Sin importes.
+   - Botón **"Entregar"** en cada encargo (rellena `deliveredAt`). Si se entrega sin estar preparado del todo, pide confirmación.
+   - **"Preparar hoy para mañana"**: los artículos con "preparar el día anterior" de los encargos de mañana, con cliente y hora. Si no hay, la sección no aparece.
+   - Los entregados del día quedan al final, plegados (_"Entregados (2)"_), y cuentan en el progreso.
+   - Calendario: punto en los días con pedidos, marca de **importante** y color de **preparar la víspera** en el día de recogida. Por defecto cuenta solo pedidos activos; un interruptor **"Mostrar entregados"** añade los archivados, y se recuerda en el dispositivo.
+   - Recuento de pedidos entregados en el mes.
+   - Botón **Nuevo encargo**.
    - Vista **Archivo**: búsqueda de pedidos entregados y cancelados por cliente o fecha.
-3. **Formulario de pedido** (crear y editar)
+   - En tablet horizontal: a la izquierda el día de un vistazo (calendario, progreso, próxima recogida y "Preparar hoy para mañana"); a la derecha, los encargos del día por hora con sus artículos para ir marcando.
+3. **Formulario de encargo** (crear y editar)
    - Cliente: campo con sugerencias (búsqueda por `nameKey`). Si no existe → "Crear cliente «X»".
-   - Fecha y hora de recogida, importante, estado, notas.
-   - **Artículos**: nombre (con sugerencias), por unidad o por kilo, precio, cantidad o kilos pedidos, peso real (al preparar), notas y preparado. Se pueden añadir, reordenar y borrar.
-   - Peso: se introduce en kilos con coma (`1,250`) y se guarda en gramos.
-   - Total en vivo, con "≈" si falta algún peso real.
+   - Fecha y hora de recogida, importante, notas. Cancelar el encargo es una acción aparte, con confirmación.
+   - **Artículos**: nombre (con sugerencias), unidades o peso, cantidad, notas, **"preparar el día anterior"** y preparado. Se pueden añadir, reordenar y borrar. Añadir un artículo tiene que ser rápido: nombre, cantidad y siguiente.
+   - Peso con selector g / kg y conversión automática (ver `order_items`).
+   - Desplegable "Precio" por artículo (precio y peso real), cerrado por defecto. Si algún artículo tiene precio, total al pie con "≈" si es estimado.
    - **Botón "Historial"**: lista cronológica de cambios del pedido y sus artículos (_"Marta · 12/12 10:41 · Hora de recogida: 10:00 → 11:30"_). Las sobrescrituras se marcan (_"sobrescribió cambios de Jordi"_). Solo con conexión; sin conexión: _"El historial necesita conexión"_.
    - **Enter no envía el formulario.** Solo se guarda con el botón.
 4. **Tickets pendientes**
@@ -342,7 +378,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
    - Mensaje centrado "No hay tickets pendientes" cuando no hay ninguno.
 5. **Clientes**: lista, ficha (teléfono, notas, sus pedidos y tickets) y, en la fase 5, fusionar duplicados.
 6. **Conflictos** (ver 4.4).
-7. **Ajustes de la empresa** (`company_admin` y `platform_admin`): nombre, idioma, destinatarios y hora del correo, usuarios (alta, rol, baja). Botones de "Enviar resumen ahora" y "Exportar JSON".
+7. **Ajustes de la empresa** (`company_admin` y `platform_admin`): nombre, idioma, **color de la empresa** (con vista previa), destinatarios y hora del correo, usuarios (alta, rol, baja). Botones de "Enviar resumen ahora" y "Exportar JSON".
 8. **Administración de la plataforma** (`platform_admin`): lista de empresas, crear empresa y su primer administrador, y **cambiar de empresa** (cambia la base de datos local). El nombre de la empresa activa se ve siempre en la cabecera.
 
 ---
@@ -355,7 +391,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 - **Dependencia del dominio**: Resend necesita un dominio verificado. Mientras no haya dominio, se puede probar con la dirección de pruebas de Resend (solo envía al correo del titular de la cuenta). El envío real a N destinatarios llega cuando haya dominio.
 - Contenido, en el idioma de la empresa:
   - Asunto: `{empresa} · Resumen {fecha}`.
-  - **Pedidos activos de hoy y de los próximos 7 días**, por día y hora: cliente, estado, artículos (✔/✗, cantidad o peso e importe) y total.
+  - **Pedidos activos de hoy y de los próximos 7 días**, por día y hora: cliente, preparado o no, y artículos (✔/✗ y cantidad). Los artículos que se preparan la víspera van señalados, y los de mañana se repiten arriba en un bloque **"Para preparar antes de mañana"**. Importes solo en los pedidos que tengan precios.
   - **Tickets pendientes** por cliente, con totales.
   - Pie: _"Este resumen refleja lo sincronizado con el servidor. Puede haber cambios pendientes en algún dispositivo sin conexión."_
   - **Adjuntos**: `export-{empresa}-{fecha}.json` (todas las colecciones de la empresa, sin fotos), `pedidos.csv`, `articulos.csv` y `tickets.csv`.
@@ -379,11 +415,12 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 
 ### Fase 1: Demo solo local (GitHub Pages)
 - Pantallas 2 a 5 de la sección 5 funcionando contra Dexie, sin servidor. Una sola empresa de demostración, sin login.
-- Artículos con precio por unidad o por kilo, totales y "≈". Archivado y "Mostrar entregados".
+- Espacio de trabajo del día con progreso, artículos en unidades o peso (g / kg), "preparar el día anterior", precio opcional. Archivado y "Mostrar entregados".
+- Color de empresa seleccionable en la demo.
 - Selector de idioma ca/es.
 - `VITE_MODE=demo`: datos de ejemplo cargables y aviso "MODO DEMO, los datos solo están en este dispositivo".
 - Workflow de despliegue a GitHub Pages (`base` y alcance del service worker = `/<repo>/`).
-- ✅ Pruebas unitarias del cálculo de importes (unidad, kilo con peso real, kilo estimado y redondeos).
+- ✅ Pruebas unitarias de pesos (entrada en g y kg, conversión, visualización), del progreso (preparado, progreso del día, día de preparación con cambio de hora) y del cálculo de importes (sin precio, unidad, peso real, estimado).
 - ✅ Se instala en un iPad desde Safari y funciona en **modo avión** tras la primera carga.
 - ✅ El carnicero la usa unos días y da su opinión. **Se ajustan las pantallas antes de seguir.**
 
@@ -479,13 +516,16 @@ Las instrucciones para Claude Code están en [`CLAUDE.md`](../CLAUDE.md), en la 
 
 ### Supuestos tomados (corregir si no son así)
 1. Los **artículos sustituyen a las tareas**: cada artículo se marca como preparado.
-2. Los precios se introducen con **IVA incluido** y se escriben a mano en cada pedido (sin catálogo).
-3. En los artículos por kilo hay **kilos pedidos** (estimación) y **peso real** (al preparar); el importe usa el real si existe.
+2. Los precios son **opcionales**; si se ponen, van con IVA incluido y se escriben a mano (sin catálogo).
+3. En los artículos por peso hay **peso pedido** y, opcionalmente, **peso real**; el importe, si hay precio, usa el real si existe.
 4. Roles: `staff`, `company_admin` y `platform_admin`.
 5. "Archivado" = estado `delivered` o `cancelled`, sin campo aparte.
 6. Las unidades son **enteras** (no hay "media unidad": eso se vende por kilo o se explica en las notas).
 7. El pedido **no lleva marca de pagado** (pregunta abierta 1): las deudas se gestionan con los tickets. Si la respuesta es otra, se añade un campo con una migración.
 8. Los usuarios no se borran, se dan de baja (`active: false`).
+9. Un artículo que se prepara la víspera es **un solo artículo con una sola marca**: marcarlo la víspera lo deja preparado para el día de recogida. Si hiciera falta distinguir "adelantado" de "terminado", se añade un campo.
+10. La víspera es el **día natural anterior**, aunque la parada cierre ese día.
+11. "Preparado" se calcula; no se puede marcar un encargo como preparado sin marcar sus artículos.
 
 ### Preguntas abiertas
 1. ¿El pedido necesita marcar si está **pagado**, o eso se gestiona con los tickets?

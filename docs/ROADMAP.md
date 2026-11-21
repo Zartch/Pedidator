@@ -1,6 +1,6 @@
 # Pedidator: roadmap de ejecución por pasos
 
-_Versión 1 · 21/11/2026 · Acompaña a [SPEC.md](SPEC.md) v3 y a [POCKETBASE.md](POCKETBASE.md)._
+_Versión 2 · 21/11/2026 · Acompaña a [SPEC.md](SPEC.md) v4, a [POCKETBASE.md](POCKETBASE.md) y al sistema de estilos de [design/](design/README.md)._
 
 Cada paso está pensado para lanzarlo con **un subagente de un modelo pequeño o medio**: tiene un objetivo cerrado, una lista de archivos, lo que no debe tocar y una comprobación automática. Las decisiones difíciles ya están tomadas en la SPEC; el subagente ejecuta, no diseña.
 
@@ -73,7 +73,7 @@ En paralelo (el resto, en orden):
 Estructura de carpetas:
 ```
 shared/            TypeScript puro compartido (UI + hooks). Sin imports de src/, Node ni navegador.
-  types.ts  pricing.ts  format.ts  nameKey.ts  permissions.ts  index.ts
+  types.ts  weight.ts  progress.ts  pricing.ts  format.ts  nameKey.ts  theme.ts  permissions.ts  index.ts
   sync/     schema.ts  normalize.ts  decide.ts  diff.ts
   summary/  model.ts  render.ts  csv.ts
 src/
@@ -95,26 +95,47 @@ Firmas que fija F1-1 y que usan todos los demás:
 ```ts
 // shared/types.ts — campos comunes de SPEC §3 + los de cada colección
 type Base = { id: string; company: string; version: number; updatedBy: string; deleted: boolean; created: string; updated: string }
-type OrderStatus = 'pending' | 'ready' | 'delivered' | 'cancelled'
+type OrderStatus = 'pending' | 'delivered' | 'cancelled'      // "preparado" NO es un estado: se calcula
+type Measure = 'unit' | 'weight'
 type Customer, Order, OrderItem, Ticket      // = Base & campos de SPEC §3
 type CollectionName = 'customers' | 'orders' | 'order_items' | 'tickets'
 
-// shared/pricing.ts
-lineCents(item: Pick<OrderItem,'pricing'|'unitPriceCents'|'quantity'|'orderedGrams'|'weightGrams'>): { cents: number; estimated: boolean }
-orderTotal(items: OrderItem[]): { cents: number; estimated: boolean }     // ignora deleted
+// shared/weight.ts
+parseWeight(input: string, unit: 'g' | 'kg'): number | null   // gramos enteros. "750",'g' -> 750 ; "1,5",'kg' -> 1500 ; "750g" o "1,5 kg" mandan sobre unit
+formatWeight(grams: number): string                           // 750 -> "750 g" ; 1000 -> "1 kg" ; 1500 -> "1,5 kg" ; 2480 -> "2,48 kg"
+toInputValue(grams: number, unit: 'g' | 'kg'): string         // 1500,'kg' -> "1,5" ; 1500,'g' -> "1500"
+displayUnit(grams: number): 'g' | 'kg'                        // < 1000 -> 'g'
+formatQuantity(item: Pick<OrderItem,'measure'|'quantity'|'orderedGrams'>): string   // "6 u" | "1,5 kg" | "" (peso sin indicar)
+
+// shared/progress.ts
+isPrepared(items: OrderItem[]): boolean                       // ≥1 artículo no borrado y todos con done
+orderProgress(items: OrderItem[]): { done: number; total: number; prepared: boolean }
+dayProgress(orders: Order[], itemsByOrder: Map<string, OrderItem[]>): { total: number; prepared: number; delivered: number }
+   // total = no cancelados ; prepared = preparados o entregados
+madridDay(utcIso: string): string                             // "2026-12-17"
+prepDay(pickupAtUtcIso: string): string                       // día natural anterior al de recogida, en Madrid
+needsPrepAhead(items: OrderItem[]): boolean                   // algún artículo no borrado con prepDayBefore
+isPrepLate(item: OrderItem, pickupAtUtcIso: string, todayMadrid: string): boolean  // prepDayBefore, sin done y ya es el día de recogida o posterior
+
+// shared/pricing.ts — el precio es opcional
+lineCents(item: Pick<OrderItem,'measure'|'unitPriceCents'|'quantity'|'orderedGrams'|'weightGrams'>): { cents: number; estimated: boolean } | null   // null = sin precio
+orderTotal(items: OrderItem[]): { cents: number; estimated: boolean; unpriced: number } | null   // null = ninguna línea con precio ; ignora borrados
 
 // shared/format.ts
 parseMoney(input: string): number | null     // "12,50" | "12.5" | "12" -> 1250 ; inválido -> null
-parseKg(input: string): number | null        // "1,250" -> 1250 gramos
 formatMoney(cents: number, locale: 'ca'|'es'): string    // "12,50 €"
-formatKg(grams: number): string              // "1,250"
 
 // shared/nameKey.ts
 nameKey(name: string): string                // minúsculas, sin acentos, espacios colapsados
 
+// shared/theme.ts — copia tipada de docs/design/derive-brand.js
+deriveBrand(hex: string): { brand: string; onBrand: string; brandStrong: string; brandSoft: string; adjusted: boolean; nearDanger: boolean } | null
+
 // src/lib/id.ts
 newId(): string                              // 15 chars [a-z0-9], crypto.getRandomValues
 ```
+
+Estilos: `docs/design/` es la copia en el repositorio del sistema de estilos (`README.md` con las reglas, `tokens.json`, `components.css` como referencia de cada componente y `derive-brand.js`). Los pasos de interfaz la leen y usan sus tokens; no inventan colores, tamaños ni tipografías.
 
 Formato de la subida (lo fijan F2-3 y F2-4): `OutboxOp` de SPEC §4.2 y la respuesta de SPEC §4.3.
 
@@ -124,13 +145,14 @@ Formato de la subida (lo fijan F2-3 y F2-4): `OutboxOp` de SPEC §4.2 y la respu
 
 ### F0-1 · Scaffold · `haiku`
 - **Objetivo:** proyecto Vite + React + TypeScript que compila, con Tailwind, shadcn/ui, ESLint, Prettier y Vitest.
-- **Archivos:** `package.json`, `vite.config.ts`, `tsconfig*.json`, `eslint.config.js`, `.prettierrc`, `.gitignore`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/index.css`, `src/App.test.tsx`, `components.json`, `CHANGELOG.md`.
+- **Archivos:** `package.json`, `vite.config.ts`, `tsconfig*.json`, `eslint.config.js`, `.prettierrc`, `.gitignore`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/index.css`, `src/App.test.tsx`, `src/styles/tokens.css`, `components.json`, `CHANGELOG.md`.
 - **Tareas:**
   1. Plantilla `react-ts` de Vite en la raíz (sin borrar `docs/`, `CLAUDE.md`, `README.md`).
   2. Tailwind con `@tailwindcss/vite`; `npx shadcn@latest init`. Alias `@/` → `src/` y `@shared/` → `shared/`.
   3. Vitest con `jsdom` y Testing Library; un test que renderiza `App`.
   4. Scripts: `dev`, `build`, `preview`, `lint`, `typecheck`, `test` (`vitest run`), `check` (= lint + typecheck + test).
   5. `.gitignore`: `node_modules`, `dist`, `.bin`, `pb_data`, `pb/pb_hooks/lib`, `test-results`, `playwright-report`.
+  6. Estilos base desde `docs/design/` (léelo entero): `src/styles/tokens.css` con todos los tokens de `tokens.json` como variables CSS (tema `neutral` en `:root`), las variables de shadcn/ui enlazadas a ellos según la tabla del README, y las fuentes empaquetadas (`@fontsource-variable/figtree`, `@fontsource-variable/bricolage-grotesque`).
 - **Hecho cuando:** `npm run check && npm run build` terminan sin errores.
 
 ### F0-2 · Idiomas · `haiku`
@@ -166,13 +188,21 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 ## 5. Fase 1: demo solo local
 
 ### F1-1 · Dominio compartido · `sonnet`
-- **Lee:** SPEC §3 (todas las tablas de colecciones y "Cálculo del importe"), sección 3 de este documento.
-- **Archivos:** `shared/types.ts`, `shared/pricing.ts`, `shared/format.ts`, `shared/nameKey.ts`, `shared/index.ts`, sus `*.test.ts`, `src/lib/id.ts` (+ test).
+- **Lee:** SPEC §3 (todas las tablas de colecciones; en `order_items`: "Pesos", "Progreso", "Preparar la víspera" y "Precio"), sección 3 de este documento, `docs/design/derive-brand.js`.
+- **Archivos:** `shared/{types,weight,progress,pricing,format,nameKey,theme,index}.ts`, sus `*.test.ts`, `src/lib/id.ts` (+ test).
 - **Tareas:** implementar exactamente las firmas de la sección 3. Tests por tabla de casos:
-  - `lineCents`: unidad (cantidad por defecto 1), kilo con peso real, kilo estimado, kilo sin ningún peso (0, estimado), redondeo (`1999 c/kg × 1250 g = 2499`; un caso que acabe en ,5 redondea hacia arriba).
-  - `orderTotal`: suma, `estimated` si alguna línea lo es, ignora borrados.
-  - `parseMoney` / `parseKg`: coma y punto, espacios, vacío, negativos y texto → `null`; más de 2 (dinero) o 3 (kilos) decimales → `null`.
+  - `parseWeight`: `750` g → 750; `1,5` y `1.5` kg → 1500; `0,75` kg → 750; `750g`, `750 g`, `1,5kg`, `1,5 KG` mandan sobre la unidad del selector; decimales en gramos → `null`; más de 3 decimales en kilos → `null`; vacío, cero, negativos y texto → `null`.
+  - `formatWeight`: 5 → `5 g`; 999 → `999 g`; 1000 → `1 kg`; 1500 → `1,5 kg`; 1250 → `1,25 kg`; 2480 → `2,48 kg`; 12005 → `12,005 kg`.
+  - `toInputValue` y `displayUnit`: ida y vuelta con `parseWeight` sin perder gramos.
+  - `isPrepared` / `orderProgress`: sin artículos → no preparado; todos marcados → preparado; uno sin marcar → no; los borrados no cuentan.
+  - `dayProgress`: los cancelados no cuentan en el total; los entregados cuentan como preparados.
+  - `madridDay` / `prepDay`: recogida a las 00:30 de Madrid (día UTC anterior); recogida el lunes siguiente al cambio de hora de marzo y de octubre; recogida el 1 de enero → 31 de diciembre.
+  - `isPrepLate`: la víspera no es tarde; el día de recogida sin marcar sí; marcado nunca.
+  - `lineCents`: sin precio → `null`; unidad; peso con peso real; peso estimado (`estimated`); redondeo (`1999 c/kg × 1250 g = 2499`).
+  - `orderTotal`: ninguna línea con precio → `null`; mezcla → suma de las que tienen y `unpriced`; ignora borrados.
+  - `parseMoney`: coma y punto, espacios, vacío, negativos y texto → `null`; más de 2 decimales → `null`.
   - `nameKey`: `"  José   Pérez "` → `"jose perez"`; `ç`, `ñ`, `l·l` y mayúsculas.
+  - `deriveBrand`: los cinco colores de ejemplo dan exactamente los valores de `brand`, `on-brand`, `brand-strong` y `brand-soft` de `docs/design/tokens.json`; hex inválido → `null`.
   - `newId`: longitud, juego de caracteres, 10 000 ids sin repetir.
 - **No hagas:** nada de sync ni de Dexie.
 - **Hecho cuando:** `npm run check` pasa.
@@ -185,31 +215,46 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
   1. `openCompanyDb(companyId)` → base `pedidator-{companyId}` con tablas `customers`, `orders`, `order_items`, `tickets`, `outbox`, `conflicts`, `blobs`, `meta`. Índices: `id`; `orders` por `pickupAt`, `status`, `customer`; `order_items` por `order`; `tickets` por `customer`, `paid`; `customers` por `nameKey`; `outbox` por `createdAt` y por `[collection+recordId]`.
   2. `session.ts`: contexto `{ companyId, userId, deviceId, syncEnabled }`. En demo: empresa `demo`, `syncEnabled: false`.
   3. `mutate.ts`: **único** punto de escritura. `create`, `update(patch)`, `softDelete`. Aplica el cambio en Dexie y, si `syncEnabled`, añade o fusiona la operación en `outbox` dentro de la misma transacción Dexie, según SPEC §4.2: update sobre update fusiona `patch` y conserva `baseVersion` y `baseValues` originales; update sobre create se integra en el create; delete sobre create aún no subido elimina ambos.
-  4. Repositorios: funciones con nombre de negocio (`createOrder`, `setItemDone`, `markTicketPaid`, `getOrCreateCustomerByName` que busca por `nameKey`, `deleteOrder` que borra también sus artículos…). `hooks.ts`: consultas con `useLiveQuery` (pedidos de un día, de un mes, tickets pendientes agrupados, sugerencias de nombres de artículo y de cliente).
+  4. Repositorios: funciones con nombre de negocio (`createOrder`, `setItemDone`, `deliverOrder`, `cancelOrder`, `markTicketPaid`, `getOrCreateCustomerByName` que busca por `nameKey`, `deleteOrder` que borra también sus artículos…). `hooks.ts`: consultas con `useLiveQuery`: pedidos de un día de Madrid con sus artículos; artículos con `prepDayBefore` de los pedidos activos del día siguiente (con cliente y hora); marcas de cada día de un mes (`hasOrders`, `important`, `prepAhead`); tickets pendientes agrupados; sugerencias de cliente y de artículo (el último uso de cada nombre devuelve también su `measure` y su `prepDayBefore`).
   5. Fechas en ISO UTC. Nada de borrado físico.
 - **Hecho cuando:** `npm run check` pasa, con tests de cada regla de fusión de la outbox y de `getOrCreateCustomerByName`.
 
 ### F1-3 · Estructura de la app · `haiku`
-- **Lee:** SPEC §5 (párrafo inicial y lista de pantallas).
-- **Dependencias nuevas:** `react-router-dom`, `date-fns`, componentes shadcn necesarios.
-- **Archivos:** `src/App.tsx`, `src/routes.tsx`, `src/components/layout/*`, `src/components/form/SafeForm.tsx`, `src/components/ui/AppDialog.tsx`, `src/pages/*Page.tsx` (vacías con título), `src/i18n/{ca,es}/{common,orders,orderForm,archive,tickets,customers}.json`.
+- **Lee:** SPEC §5 (párrafo inicial y lista de pantallas), `docs/design/README.md` y `docs/design/components.css` (bloques Button, Badge, AppShell, StatusBar).
+- **Dependencias nuevas:** `react-router-dom`, `date-fns`, `lucide-react`, componentes shadcn necesarios.
+- **Archivos:** `src/App.tsx`, `src/routes.tsx`, `src/components/layout/*`, `src/components/form/SafeForm.tsx`, `src/components/ui/{AppDialog,Badge}.tsx`, `src/theme/BrandTheme.tsx` (+ test), `src/pages/*Page.tsx` (vacías con título), `src/i18n/{ca,es}/{common,day,orderForm,archive,tickets,customers}.json`.
 - **Tareas:**
-  1. Rutas: `/` pedidos, `/orders/new`, `/orders/:id`, `/archive`, `/tickets`, `/customers`, `/customers/:id`. Una página vacía por ruta y su namespace de traducciones ya creado.
-  2. Layout: cabecera con el nombre de la empresa, hueco para la barra de estado, navegación inferior en móvil y lateral desde `md`. Aviso "MODO DEMO" si `VITE_MODE=demo`. Selector de idioma ca/es (se guarda en el dispositivo).
-  3. `SafeForm`: Enter no envía (excepto en `textarea`, donde hace salto de línea). `AppDialog`: no se cierra al tocar fuera y su contenido tiene scroll.
-- **Hecho cuando:** `npm run check` pasa; test de `SafeForm` (Enter no dispara `onSubmit`).
+  1. Rutas: `/` día (hoy), `/day/:date`, `/orders/new`, `/orders/:id`, `/archive`, `/tickets`, `/customers`, `/customers/:id`. Una página vacía por ruta y su namespace de traducciones ya creado. En la interfaz se dice "encargo" (ca: "encàrrec").
+  2. Layout según el componente AppShell del sistema de estilos: cabecera con el nombre de la empresa sobre `brand`, hueco para la barra de estado, navegación inferior en móvil y lateral desde 768px (Día, Tickets, Clientes), áreas seguras de iOS. Aviso "MODO DEMO" si `VITE_MODE=demo`. Selector de idioma ca/es (se guarda en el dispositivo).
+  3. `BrandTheme`: recibe el color de la empresa, llama a `deriveBrand` y pone `--brand`, `--on-brand`, `--brand-strong` y `--brand-soft` en la raíz; sin color, deja el tema neutro. En modo demo, un selector con los cinco colores de ejemplo de `docs/design/tokens.json`.
+  4. `SafeForm`: Enter no envía (excepto en `textarea`, donde hace salto de línea). `AppDialog`: no se cierra al tocar fuera y su contenido tiene scroll. `Badge`: variantes `ok`, `warn`, `danger`, `prep`, `brand` y neutra, siempre con icono y texto.
+- **Hecho cuando:** `npm run check` pasa; test de `SafeForm` (Enter no dispara `onSubmit`) y de `BrandTheme` (pone y quita las cuatro variables).
 
-### F1-4 · Pedidos (inicio) · `sonnet`
-- **Lee:** SPEC §5 punto 2.
-- **Archivos:** `src/pages/OrdersPage.tsx`, `src/components/orders/{MonthCalendar,DayOrderList,OrderCard,DayProgress}.tsx`, `src/lib/dates.ts` (+ test), `src/i18n/{ca,es}/orders.json`.
-- **Tareas:** calendario mensual (punto en días con pedidos, color en días con importantes); interruptor "Mostrar entregados" recordado en el dispositivo; lista del día por hora con cliente, artículos preparados `n/m` y total (≈ si estimado); marcar artículos desde la lista; progreso del día y recuento de entregados del mes; botón "Nuevo pedido". `dates.ts`: día de Madrid de una fecha UTC y rango UTC de un día y de un mes de Madrid (con tests en cambio de hora de marzo y octubre).
-- **Hecho cuando:** `npm run check` pasa, con tests de `dates.ts` y de la lista (pedido archivado oculto y visible con el interruptor).
+### F1-4 · Espacio de trabajo del día · `sonnet`
+- **Lee:** SPEC §5 punto 2 y §3 "Progreso" y "Preparar la víspera"; `docs/design/README.md` y los bloques DayWorkspace, OrderCard, ItemRow, Calendar y Progress de `docs/design/components.css`.
+- **Archivos:** `src/pages/DayPage.tsx`, `src/components/day/{DayHeader,DayProgress,NextPickup,PrepAheadList,DayOrderList,OrderCard,ItemCheckRow,MonthCalendar,WeekStrip,DeliveredGroup}.tsx`, `src/lib/dates.ts` (+ test), `src/i18n/{ca,es}/day.json`.
+- **Tareas:**
+  1. Día seleccionado en la URL (`/day/2026-12-17`; `/` = hoy en Madrid). Anterior, siguiente, "Hoy". Semana en móvil y mes en tablet, con las tres marcas por día: pedidos, importante, preparar la víspera (el día de recogida). Interruptor "Mostrar entregados" recordado en el dispositivo.
+  2. Barra de progreso con `dayProgress`: "3 de 8 encargos preparados", y debajo por preparar / entregados.
+  3. "Próxima recogida": el primer encargo sin entregar por hora (solo cuando el día es hoy).
+  4. Lista por hora de recogida. Cada tarjeta: hora, cliente, estado calculado (por preparar / preparado / entregado) y **sus artículos con casilla, cantidad (`formatQuantity`) y notas, marcables ahí mismo**. Sin importes. Aviso "Había que prepararlo ayer" con `isPrepLate`. Botón "Entregar" (confirmación si no está preparado del todo). Tocar el nombre abre el formulario.
+  5. Sección "Preparar hoy para mañana" con los artículos `prepDayBefore` de los encargos de mañana (cliente y hora); marcarlos usa el mismo `setItemDone`. No aparece si está vacía.
+  6. Entregados al final, plegados, con su número. Recuento de entregados del mes. Botón "Nuevo encargo".
+  7. Desde 1024px, dos columnas: a la izquierda calendario, progreso, próxima recogida y "Preparar hoy para mañana"; a la derecha, los encargos del día por hora con sus artículos.
+  8. `dates.ts`: rango UTC de un día y de un mes de Madrid, día anterior y siguiente (con tests en cambio de hora de marzo y octubre).
+- **No hagas:** guardar "preparado" en el pedido; mostrar precios o totales.
+- **Hecho cuando:** `npm run check` pasa, con tests de: marcar el último artículo deja el encargo como preparado y sube el progreso; desmarcarlo lo revierte; un artículo `prepDayBefore` de mañana aparece hoy y marcarlo aquí lo deja marcado en su encargo; entregado se pliega y sigue contando.
 
-### F1-5 · Formulario de pedido · `sonnet`
-- **Lee:** SPEC §5 punto 3 (sin el historial).
-- **Archivos:** `src/pages/OrderFormPage.tsx`, `src/components/orders/{CustomerPicker,ItemsEditor,ItemRow,OrderTotal}.tsx`, `src/i18n/{ca,es}/orderForm.json`.
-- **Tareas:** crear y editar; cliente con sugerencias y "Crear cliente «X»"; fecha, hora, importante, estado, notas; artículos (nombre con sugerencias, unidad/kilo, precio, cantidad o kilos pedidos, peso real, notas, preparado; añadir, reordenar con botones subir/bajar, borrar); total en vivo. Guardar solo con el botón; al pasar a `delivered` se rellena `deliveredAt`. Entradas de dinero y peso con `parseMoney`/`parseKg` y `inputMode="decimal"`.
-- **Hecho cuando:** `npm run check` pasa, con test de crear un pedido con un artículo por kilo sin peso real (total con ≈) y de que el total cambia al poner el peso.
+### F1-5 · Formulario de encargo · `sonnet`
+- **Lee:** SPEC §5 punto 3 (sin el historial) y §3 `order_items` entero; bloques Field, WeightField e ItemRow de `docs/design/components.css`.
+- **Archivos:** `src/pages/OrderFormPage.tsx`, `src/components/orders/{CustomerPicker,ItemsEditor,ItemEditorRow,WeightField,PriceDisclosure,OrderTotal}.tsx`, `src/i18n/{ca,es}/orderForm.json`.
+- **Tareas:**
+  1. Crear y editar; cliente con sugerencias y "Crear cliente «X»"; fecha, hora, importante, notas. "Cancelar encargo" aparte, con confirmación. No se guarda sin al menos un artículo.
+  2. Artículos: nombre con sugerencias (al elegir una, se proponen su `measure` y su `prepDayBefore`), selector unidades / peso, cantidad, notas, interruptor "Preparar el día anterior", preparado; añadir, reordenar con botones subir/bajar, borrar. Tras rellenar un artículo, el foco pasa al nombre del siguiente.
+  3. `WeightField`: campo con `inputMode="decimal"` y selector g / kg. Usa `parseWeight`, `toInputValue` y `displayUnit`; al cambiar el selector convierte lo escrito; muestra debajo la equivalencia con `formatWeight` ("= 1,5 kg"); recuerda en el dispositivo la última unidad usada.
+  4. `PriceDisclosure`: desplegable "Precio" cerrado por defecto, con precio (`parseMoney`) y peso real. `OrderTotal` solo aparece si `orderTotal` no es `null`, con "≈" si es estimado y el número de artículos sin precio.
+  5. Guardar solo con el botón.
+- **Hecho cuando:** `npm run check` pasa, con tests de: `WeightField` (escribir `1500` en g y cambiar a kg muestra `1,5` y guarda 1500; escribir `750g` con el selector en kg guarda 750); crear un encargo sin ningún precio no muestra total; al poner precio a un artículo por peso sin peso real aparece el total con "≈".
 
 ### F1-6 · Archivo · `haiku`
 - **Lee:** SPEC §5 punto 2 ("Vista Archivo").
@@ -233,12 +278,12 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 ### F1-9 · Datos de demo, instalación y GitHub Pages · `haiku`
 - **Lee:** SPEC §4.7, §7 fase 1, §8 "GitHub Pages".
 - **Archivos:** `src/demo/seed.ts`, `src/components/layout/{DemoBanner,InstallHint}.tsx`, `src/main.tsx`, `.github/workflows/pages.yml`, `src/i18n/{ca,es}/common.json`.
-- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (pedidos repartidos por el mes actual, algunos importantes, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/pedidator/` y publica en Pages.
+- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (encargos repartidos por el mes actual con **varios para hoy y para mañana**, algunos importantes, algunos con artículos de "preparar el día anterior", pesos por debajo y por encima del kilo, la mayoría sin precio, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/pedidator/` y publica en Pages.
 - **Hecho cuando:** `npm run check` y `VITE_MODE=demo VITE_BASE=/pedidator/ npm run build` pasan.
 
 ### F1-10 · Pruebas de extremo a extremo de la demo · `sonnet`
 - **Archivos:** `e2e/demo.spec.ts`.
-- **Tareas:** en modo demo: crear pedido con dos artículos (uno por kilo) y verlo en el calendario; marcar artículo; entregarlo y comprobar que desaparece y vuelve con "Mostrar entregados"; crear ticket y marcarlo pagado; cambiar de idioma; recargar sin conexión y comprobar que los datos siguen.
+- **Tareas:** en modo demo: crear un encargo para hoy con dos artículos (uno por peso escrito en gramos) y verlo en el día; marcar sus artículos y ver que pasa a preparado y sube la barra de progreso; crear un encargo para mañana con un artículo de "preparar el día anterior" y verlo hoy en "Preparar hoy para mañana" y el color en el calendario de mañana; entregar un encargo y ver que se pliega en "Entregados"; crear ticket y marcarlo pagado; cambiar de idioma; recargar sin conexión y comprobar que los datos siguen.
 - **Hecho cuando:** `npm run e2e -- --trace off` pasa. Si un test descubre un fallo de la app, arréglalo solo si es de una línea; si no, descríbelo en el informe.
 
 ### Puerta G1
@@ -277,7 +322,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Lee:** SPEC §4.2 y §4.3 completos.
 - **Archivos:** `shared/sync/{schema,normalize,decide,diff,index}.ts` y sus tests, `shared/index.ts`.
 - **Tareas:**
-  1. `schema.ts`: por colección, campos que el cliente puede escribir (nunca `id`, `company`, `version`, `updatedBy`, `nameKey`, `created`, `updated`, `photo`), tipo de cada campo, obligatorios en `create`, y relaciones (`campo → colección`). `validateOp(op)` → `{ ok } | { ok: false, reason }` (colección desconocida, campo no permitido, tipo incorrecto, entero negativo, id con formato inválido).
+  1. `schema.ts`: por colección, campos que el cliente puede escribir (nunca `id`, `company`, `version`, `updatedBy`, `nameKey`, `created`, `updated`, `photo`; en `orders.status` solo `pending`, `delivered`, `cancelled`; en `order_items.measure` solo `unit`, `weight`), tipo de cada campo, obligatorios en `create`, y relaciones (`campo → colección`). `validateOp(op)` → `{ ok } | { ok: false, reason }` (colección desconocida, campo no permitido, tipo incorrecto, entero negativo, id con formato inválido).
   2. `normalize.ts`: `normalizeValue(fieldType, value)` (fechas a ISO UTC con milisegundos aceptando también el formato de PocketBase `2026-12-12 10:00:00.000Z`; textos recortados; `null`/`undefined` → vacío del tipo) y `valuesEqual`.
   3. `decide.ts`: `decideOp(server: ServerRecord | null, op: OutboxOp)` → una de: `create` · `noop_same_create` · `id_taken` · `apply` · `merge` · `conflict{type, fields}` · `soft_delete` · `force_apply`. Cubre **cada fila** de la tabla de SPEC §4.3 que no depende de base de datos (auth, empresa, idempotencia y `nameKey` van en el hook).
   4. `diff.ts`: `{ campo: [anterior, nuevo] }` solo de campos que cambian.
@@ -311,7 +356,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Archivos:** `shared/permissions.ts` (+ test), `pb/pb_hooks/admin.pb.js`, `tests/integration/admin.test.ts`.
 - **Tareas:**
   1. `permissions.ts` (puro): `canManageUser(actor, target, changes)`, `canEditCompany(actor, companyId)`, `canCreateCompany(actor)` según SPEC §3.
-  2. Rutas: `POST /api/admin/users`, `PATCH /api/admin/users/{id}` (nombre, rol, `active`, contraseña nueva), `PATCH /api/admin/companies/{id}` (nombre, idioma, destinatarios, hora), `POST /api/admin/companies` (empresa + primer `company_admin`), `PATCH /api/account` (nombre, idioma, contraseña con la actual).
+  2. Rutas: `POST /api/admin/users`, `PATCH /api/admin/users/{id}` (nombre, rol, `active`, contraseña nueva), `PATCH /api/admin/companies/{id}` (nombre, idioma, color `#rrggbb` validado, destinatarios, hora), `POST /api/admin/companies` (empresa + primer `company_admin`), `PATCH /api/account` (nombre, idioma, contraseña con la actual).
   3. Baja o cambio de contraseña → `refreshTokenKey()`.
   4. Validar correos de `emailRecipients` y `emailHour` 0–23.
 - **Hecho cuando:** `npm run check && npm run test:integration` pasan con tests de: `staff` no puede nada de administración; `company_admin` no crea `platform_admin` ni usuarios de otra empresa ni edita otra empresa; nadie cambia su propio rol ni se da de baja; tras la baja, el token antiguo no lee ni hace push; `PATCH /api/account` con contraseña actual incorrecta falla.
@@ -333,7 +378,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 ### F2-8 · Sesión y login · `sonnet`
 - **Lee:** SPEC §4.6, §5 punto 1.
 - **Archivos:** `src/auth/session.ts`, `src/sync/api/client.ts`, `src/pages/LoginPage.tsx`, `src/components/layout/*`, `src/data/session.ts`, `src/i18n/{ca,es}/auth.json`.
-- **Tareas:** login con el SDK (solo dentro de `src/auth` y `src/sync`); la sesión guarda usuario, rol y empresa en el dispositivo para arrancar sin conexión; abre la base de la empresa; `authRefresh` al recuperar conexión; cerrar sesión con aviso si hay cambios pendientes; rutas protegidas por rol; modo demo intacto. Excepción a la regla 1: las pantallas que solo funcionan con conexión llaman a funciones de `src/sync/api/*`, nunca al SDK.
+- **Tareas:** login con el SDK (solo dentro de `src/auth` y `src/sync`); al entrar se aplica el `brandColor` de la empresa con `BrandTheme`; la sesión guarda usuario, rol y empresa en el dispositivo para arrancar sin conexión; abre la base de la empresa; `authRefresh` al recuperar conexión; cerrar sesión con aviso si hay cambios pendientes; rutas protegidas por rol; modo demo intacto. Excepción a la regla 1: las pantallas que solo funcionan con conexión llaman a funciones de `src/sync/api/*`, nunca al SDK.
 - **Hecho cuando:** `npm run check` pasa.
 
 ### F2-9 · Bajada, tiempo real y conectividad · `sonnet`
@@ -365,7 +410,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 ### F2-12 · Ajustes de empresa y usuarios · `haiku`
 - **Lee:** SPEC §5 punto 7.
 - **Archivos:** `src/sync/api/admin.ts`, `src/pages/{SettingsPage,AccountPage}.tsx`, `src/i18n/{ca,es}/settings.json`.
-- **Tareas:** formulario de empresa; lista de usuarios con alta, rol y baja; perfil propio (nombre, idioma, contraseña). Solo visible para `company_admin` y `platform_admin`. Los botones "Enviar resumen ahora" y "Exportar JSON" quedan para F4-3.
+- **Tareas:** formulario de empresa, con el **color de la empresa** (selector, vista previa con cabecera, botón y una tarjeta, y los avisos de `deriveBrand`); lista de usuarios con alta, rol y baja; perfil propio (nombre, idioma, contraseña). Solo visible para `company_admin` y `platform_admin`. Los botones "Enviar resumen ahora" y "Exportar JSON" quedan para F4-3.
 - **Hecho cuando:** `npm run check` pasa.
 
 ### F2-13 · Administración de la plataforma · `haiku`
@@ -441,7 +486,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 ### F4-1 · Resumen diario (funciones puras) · `sonnet`
 - **Lee:** SPEC §6.
 - **Archivos:** `shared/summary/{model,render,csv,i18n}.ts` y tests, `shared/index.ts`.
-- **Tareas:** `buildSummary(data, today, locale)` (pedidos activos de hoy + 7 días por día y hora de Madrid; tickets pendientes por cliente; totales con ≈); `renderHtml`, `renderText`; `toCsv` de pedidos, artículos y tickets (separador `;`, coma decimal, BOM); `exportJson`. Textos del correo en `shared/summary/i18n.ts` (ca y es), con test de paridad. Las fechas llegan ya convertidas a Madrid (la conversión la hace quien llama).
+- **Tareas:** `buildSummary(data, today, locale)` (pedidos activos de hoy + 7 días por día y hora de Madrid, con artículos, cantidades con `formatQuantity` y preparado o no; bloque "Para preparar antes de mañana" con los artículos `prepDayBefore` de mañana; tickets pendientes por cliente; importes solo donde haya precios); `renderHtml`, `renderText`; `toCsv` de pedidos, artículos y tickets (separador `;`, coma decimal, BOM); `exportJson`. Textos del correo en `shared/summary/i18n.ts` (ca y es), con test de paridad. Las fechas llegan ya convertidas a Madrid (la conversión la hace quien llama).
 - **Hecho cuando:** `npm run check` pasa.
 
 ### F4-2 · Cron y envío · `sonnet`
