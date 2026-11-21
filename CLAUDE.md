@@ -1,6 +1,7 @@
 # Pedidator
 
 PWA offline-first y multiempresa para gestionar pedidos y tickets pendientes de paradas pequeñas.
+Sirve para dos cosas: preparar los encargos del día y entregarlos sabiendo quién viene, a qué hora y a por qué. Los precios son secundarios.
 Frontend: Vite + React + TS + Tailwind + shadcn/ui + Dexie + i18next (ca/es).
 Backend: PocketBase v0.40.6 (pb_hooks en JS), compilado desde el módulo Go de `pb/`.
 
@@ -8,6 +9,7 @@ Backend: PocketBase v0.40.6 (pb_hooks en JS), compilado desde el módulo Go de `
 1. `docs/ROADMAP.md` — qué paso toca y qué archivos puede tocar cada paso.
 2. `docs/SPEC.md` — especificación completa. Lee las secciones que cite tu paso.
 3. `docs/POCKETBASE.md` — API de PocketBase **verificada**. Si tu memoria de PocketBase dice otra cosa, manda este documento. `pocketbase.io` no es accesible desde el entorno cloud.
+4. `docs/design/` — sistema de estilos (empieza por `ABOUT.md`). Léelo antes de hacer cualquier pantalla: colores, tamaños táctiles, tipografía y componentes salen de ahí, no se inventan.
 
 ## Comandos
 Los crea la fase 0 (y la fase 2 los de PocketBase). Si un comando aún no existe, es que su paso no se ha hecho.
@@ -30,8 +32,8 @@ Los crea la fase 0 (y la fase 2 los de PocketBase). Si un comando aún no existe
 6. Una base Dexie por empresa (`pedidator-{companyId}`).
 7. IDs generados en cliente: 15 chars [a-z0-9] (`src/lib/id.ts`).
 8. Borrado = `deleted: true`. Nunca borrado físico de colecciones sincronizables.
-9. Dinero en céntimos enteros; peso en gramos enteros. Nunca floats para guardar dinero ni peso.
-10. La lógica compartida vive en `shared/` (TypeScript puro, sin dependencias de navegador, Node ni PocketBase): importes, `nameKey`, permisos, decisiones de sincronización, resumen diario. La usan la UI y, empaquetada, los pb_hooks. Los hooks son adaptadores finos.
+9. Dinero en céntimos enteros; peso en gramos enteros. Nunca floats para guardar dinero ni peso. "Preparado" y los totales de un pedido no se guardan: se calculan a partir de sus artículos.
+10. La lógica compartida vive en `shared/` (TypeScript puro, sin dependencias de navegador, Node ni PocketBase): pesos, progreso del día, importes, `nameKey`, color de marca, permisos, decisiones de sincronización, resumen diario. La usan la UI y, empaquetada, los pb_hooks. Los hooks son adaptadores finos.
 11. Fechas: almacenar UTC, mostrar en Europe/Madrid. En los hooks, zona horaria con `new Timezone("Europe/Madrid")` (no hay `Intl`).
 12. No usar `navigator.onLine` como fuente de verdad de conectividad.
 13. Ningún texto de UI fuera de `src/i18n/{ca,es}/*.json` (un archivo por pantalla; las claves deben existir en los dos idiomas).
