@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Ajustes de la empresa</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="pedidator-tokens.css">
+<link rel="stylesheet" href="ds/pedidator/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="pd pd-shell" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<header class="pd-header">
+<a class="pd-back" href="Main.dc.html" aria-label="Volver al día" style="color: var(--on-brand)"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"></path></svg></a>
+<span class="pd-header__company">Ajustes</span>
+<span class="pd-header__user">Marta</span>
+</header>
+<main class="pd-main pd-scroll">
+<div class="pd-field">
+<label class="pd-field__label" for="s-name">Nombre de la parada</label>
+<div class="pd-input"><input id="s-name" readonly value="Carnisseria Vila"></div>
+</div>
+<div class="pd-field">
+<span class="pd-field__label" id="s-lang">Idioma</span>
+<div class="pd-seg" role="group" aria-labelledby="s-lang">
+<button type="button" aria-pressed="true">Català</button>
+<button type="button" aria-pressed="false">Castellano</button>
+</div>
+</div>
+<section class="pd-card" style="display: flex; flex-direction: column; gap: 12px">
+<div>
+<h2 class="pd-heading">Color de la empresa</h2>
+<p class="pd-muted" style="margin: 2px 0 0">Elige un color. La app calcula el resto y comprueba que el texto se lee.</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px" role="group" aria-label="Colores">
+<sc-for list="{{swatches}}" as="s" hint-placeholder-count="5">
+<button type="button" aria-label="{{s.label}}" aria-pressed="{{s.on}}" onClick="{{s.pick}}" style="{{s.style}}"></button>
+</sc-for>
+</div>
+<div style="border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+<div class="pd-header" style="min-height: 44px"><span class="pd-header__company" style="font-size: 17px">Carnisseria Vila</span></div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--surface)">
+<button class="pd-btn pd-btn--primary" type="button">Entregar</button>
+<span class="pd-badge pd-badge--brand">Próxima recogida</span>
+</div>
+</div>
+<sc-if value="{{nearDanger}}" hint-placeholder-val="{{ true }}">
+<span class="pd-badge pd-badge--danger" style="white-space: normal; border-radius: 8px; padding: 6px 10px; align-items: flex-start"><svg class="pd-icon pd-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.8 19.5h18.4L12 4z M12 10v4.5 M12 17.3v.2"></path></svg>Parecido al rojo de error: los errores llevan siempre icono y palabra.</span>
+</sc-if>
+<sc-if value="{{lightBrand}}" hint-placeholder-val="{{ false }}">
+<span class="pd-badge" style="white-space: normal; border-radius: 8px; padding: 6px 10px">Color claro: el texto encima pasa a oscuro.</span>
+</sc-if>
+</section>
+<section class="pd-card" style="display: flex; flex-direction: column; gap: 12px">
+<h2 class="pd-heading">Resumen diario por correo</h2>
+<div class="pd-field">
+<span class="pd-field__label">Destinatarios</span>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span class="pd-badge">marta@carnisseriavila.example</span>
+<span class="pd-badge">jordi@carnisseriavila.example</span>
+</div>
+</div>
+<div class="pd-field" style="max-width: 160px">
+<label class="pd-field__label" for="s-hour">Hora de envío</label>
+<div class="pd-input pd-input--num"><input id="s-hour" readonly value="21:00"></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button class="pd-btn" type="button" style="padding: 0 12px">Enviar resumen ahora</button>
+<button class="pd-btn pd-btn--quiet" type="button">Exportar datos</button>
+</div>
+</section>
+<section class="pd-card" style="display: flex; flex-direction: column; padding-top: 12px; padding-bottom: 4px">
+<h2 class="pd-heading">Usuarios</h2>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--line)">
+<div><div style="font: 600 16px/22px var(--font-sans)">Marta Vila</div><div class="pd-muted">Administradora</div></div>
+<span class="pd-badge pd-badge--ok">Activa</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; border-bottom: 1px solid var(--line)">
+<div><div style="font: 600 16px/22px var(--font-sans)">Jordi Ferrer</div><div class="pd-muted">Personal</div></div>
+<span class="pd-badge pd-badge--ok">Activo</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px">
+<div><div style="font: 600 16px/22px var(--font-sans); color: var(--ink-muted)">Pau Roca</div><div class="pd-muted">Personal</div></div>
+<span class="pd-badge">De baja</span>
+</div>
+<button class="pd-btn pd-btn--quiet" type="button" style="align-self: flex-start"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>Añadir usuario</button>
+</section>
+</main>
+<div class="pd-actionbar">
+<button class="pd-btn pd-btn--primary pd-btn--lg pd-btn--block" type="button">Guardar</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["neutral","butcher","fishmonger","greengrocer","bakery"],"default":"butcher","section":"Empresa"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var theme = (this.state && this.state.theme) || (this.props.theme ?? 'butcher');
+    var list = [
+      { id: 'neutral', label: 'Neutro', color: '#2d3138' },
+      { id: 'butcher', label: 'Rojo carnicería', color: '#a31d2f' },
+      { id: 'fishmonger', label: 'Azul pescadería', color: '#0f67b3' },
+      { id: 'greengrocer', label: 'Verde frutería', color: '#39841c' },
+      { id: 'bakery', label: 'Amarillo panadería', color: '#e2a52b' }
+    ];
+    return {
+      theme: theme,
+      nearDanger: theme === 'butcher',
+      lightBrand: theme === 'bakery',
+      swatches: list.map(function (s) {
+        var on = s.id === theme;
+        return {
+          label: s.label, on: on,
+          pick: function () { self.setState({ theme: s.id }); },
+          style: { width: '48px', height: '48px', padding: 0, borderRadius: '50%', cursor: 'pointer', background: s.color, border: '3px solid #ffffff', boxShadow: on ? '0 0 0 3px #1b1d1f' : '0 0 0 1.5px #7b8085' }
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
