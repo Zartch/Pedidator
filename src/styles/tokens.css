@@ -1,0 +1,140 @@
+/* Tokens de docs/design/tokens.json (tema neutral). Generado una vez; si cambian los tokens, regenerar en el mismo commit. */
+@import '@fontsource-variable/figtree';
+@import '@fontsource-variable/bricolage-grotesque';
+
+:root {
+  /* Color: neutros y estado, iguales en todas las empresas */
+  --surface: #f5f5f2;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eaeae6;
+  --ink: #1b1d1f;
+  --ink-muted: #5a5f64;
+  --line: #dcdcd6;
+  --line-strong: #7b8085;
+  --brand: #2d3138;
+  --on-brand: #ffffff;
+  --brand-strong: #1c2026;
+  --brand-soft: #eef0f3;
+  --ok: #0d6e68;
+  --ok-soft: #dff3f0;
+  --warn: #93470a;
+  --warn-soft: #fdecc8;
+  --danger: #b3261e;
+  --danger-soft: #fbe4e1;
+  --prep: #5b3fb0;
+  --prep-soft: #ece8fa;
+  --on-status: #ffffff;
+  --demo-butcher: #a31d2f;
+  --demo-fishmonger: #0f67b3;
+  --demo-greengrocer: #39841c;
+  --demo-bakery: #e2a52b;
+
+  /* Tipografía */
+  --family-display:
+    'Bricolage Grotesque Variable', 'Bricolage Grotesque', 'Figtree Variable',
+    system-ui, sans-serif;
+  --family-sans:
+    'Figtree Variable', 'Figtree', system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --type-display-size: 32px;
+  --type-display-line: 36px;
+  --type-display-weight: 700;
+  --type-display-tracking: -0.01em;
+  --type-title-size: 22px;
+  --type-title-line: 28px;
+  --type-title-weight: 650;
+  --type-numeral-size: 20px;
+  --type-numeral-line: 24px;
+  --type-numeral-weight: 650;
+  --type-heading-size: 18px;
+  --type-heading-line: 24px;
+  --type-heading-weight: 600;
+  --type-body-size: 16px;
+  --type-body-line: 24px;
+  --type-body-weight: 400;
+  --type-body-strong-size: 16px;
+  --type-body-strong-line: 24px;
+  --type-body-strong-weight: 600;
+  --type-label-size: 14px;
+  --type-label-line: 20px;
+  --type-label-weight: 500;
+  --type-caption-size: 13px;
+  --type-caption-line: 18px;
+  --type-caption-weight: 500;
+
+  /* Espaciado, radios, sombras y tamaños */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-overlay: 0 8px 28px rgba(27, 29, 31, 0.18);
+  --touch-min: 48px;
+  --touch-lg: 56px;
+  --bar-height: 64px;
+  --rail-width: 88px;
+  --list-col: 420px;
+  --content-max: 1180px;
+
+  /* Variables de shadcn/ui enlazadas a los tokens (tabla de docs/design/README.md) */
+  --background: var(--surface);
+  --foreground: var(--ink);
+  --card: var(--surface-raised);
+  --card-foreground: var(--ink);
+  --popover: var(--surface-raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: var(--on-brand);
+  --secondary: var(--surface-sunken);
+  --secondary-foreground: var(--ink);
+  --muted: var(--surface-sunken);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand-strong);
+  --destructive: var(--danger);
+  --destructive-foreground: var(--on-status);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--brand-strong);
+  --radius: var(--radius-md);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-prep: var(--prep);
+  --color-prep-soft: var(--prep-soft);
+  --color-on-status: var(--on-status);
+  --color-demo-butcher: var(--demo-butcher);
+  --color-demo-fishmonger: var(--demo-fishmonger);
+  --color-demo-greengrocer: var(--demo-greengrocer);
+  --color-demo-bakery: var(--demo-bakery);
+  --font-display: var(--family-display);
+  --font-sans: var(--family-sans);
+}
+
+@theme {
+  --breakpoint-tablet: 768px;
+  --breakpoint-wide: 1024px;
+}
