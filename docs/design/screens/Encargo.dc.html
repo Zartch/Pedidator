@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Encargo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="pedidator-tokens.css">
+<link rel="stylesheet" href="ds/pedidator/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="pd pd-shell" data-theme="{{theme}}" style="width: 390px; height: 844px">
+<header class="pd-header">
+<a class="pd-back" href="Main.dc.html" aria-label="Volver al día" style="color: var(--on-brand)"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"></path></svg></a>
+<span class="pd-header__company">Nuevo encargo</span>
+</header>
+<main class="pd-main pd-scroll">
+<div class="pd-field">
+<label class="pd-field__label" for="e-customer">Cliente</label>
+<div class="pd-input"><input id="e-customer" readonly value="Bar La Plaça"></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: none">
+<div class="pd-field">
+<label class="pd-field__label" for="e-date">Día de recogida</label>
+<div class="pd-input"><input id="e-date" readonly value="Vie 18 dic"></div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="e-time">Hora</label>
+<div class="pd-input pd-input--num"><input id="e-time" readonly value="12:30" inputmode="numeric"></div>
+</div>
+</div>
+<div class="pd-field">
+<span class="pd-field__label" id="e-important">Prioridad</span>
+<div class="pd-seg" role="group" aria-labelledby="e-important">
+<button type="button" aria-pressed="false">Normal</button>
+<button type="button" aria-pressed="true">Importante</button>
+</div>
+</div>
+<h2 class="pd-heading">Artículos</h2>
+<div class="pd-card" style="padding-top: 0; padding-bottom: 0">
+<div class="pd-item" style="cursor: default">
+<span class="pd-item__body"><span class="pd-item__name">Entrecot de ternera</span><span class="pd-item__detail"><span>fileteado fino</span></span></span>
+<span class="pd-item__qty">2,5 kg</span>
+</div>
+<div class="pd-item" style="cursor: default">
+<span class="pd-item__body"><span class="pd-item__name">Butifarra</span></span>
+<span class="pd-item__qty">6 u</span>
+</div>
+</div>
+<div class="pd-card" style="display: flex; flex-direction: column; gap: 12px; border-color: var(--brand-strong); box-shadow: inset 0 0 0 1px var(--brand-strong)">
+<div class="pd-field">
+<label class="pd-field__label" for="e-item">Artículo</label>
+<div class="pd-input"><input id="e-item" readonly value="Redondo mechado"></div>
+</div>
+<div class="pd-field">
+<span class="pd-field__label" id="e-measure">Se pide por</span>
+<div class="pd-seg" role="group" aria-labelledby="e-measure">
+<button type="button" aria-pressed="false">Unidades</button>
+<button type="button" aria-pressed="true">Peso</button>
+</div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="e-weight">Cantidad</label>
+<div class="pd-weight">
+<div class="{{weightBoxCls}}"><input id="e-weight" inputmode="decimal" value="{{weightValue}}" onChange="{{onWeight}}" aria-describedby="e-weight-hint"></div>
+<div class="pd-seg" role="group" aria-label="Unidad">
+<button type="button" aria-pressed="{{isGrams}}" onClick="{{setGrams}}">g</button>
+<button type="button" aria-pressed="{{isKilos}}" onClick="{{setKilos}}">kg</button>
+</div>
+</div>
+<span class="{{weightHintCls}}" id="e-weight-hint">{{weightHint}}</span>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="e-note">Notas</label>
+<div class="pd-input"><input id="e-note" readonly value="atado, sin salsa"></div>
+</div>
+<button type="button" class="pd-switch" role="switch" aria-checked="{{prep}}" onClick="{{togglePrep}}"><span class="pd-switch__track"></span>Preparar el día anterior</button>
+<sc-if value="{{prep}}" hint-placeholder-val="{{ true }}">
+<span class="pd-badge pd-badge--prep" style="white-space: normal; border-radius: 8px; padding: 6px 10px; align-self: flex-start">Saldrá el jueves 17 en «Preparar hoy para mañana»</span>
+</sc-if>
+<button class="pd-btn pd-btn--quiet" type="button" style="align-self: flex-start"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"></path></svg>Precio (opcional)</button>
+</div>
+<button class="pd-btn" type="button" style="flex: none"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>Añadir otro artículo</button>
+<div class="pd-field">
+<label class="pd-field__label" for="e-notes">Notas del encargo</label>
+<div class="pd-input"><input id="e-notes" readonly value="Pasa a recogerlo su hijo"></div>
+</div>
+</main>
+<div class="pd-actionbar" style="display: flex; gap: 8px">
+<a class="pd-btn pd-btn--lg" href="Main.dc.html" style="color: var(--ink)">Cancelar</a>
+<a class="pd-btn pd-btn--primary pd-btn--lg" href="Main.dc.html" style="flex: 1; color: var(--on-brand)">Guardar</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["neutral","butcher","fishmonger","greengrocer","bakery"],"default":"butcher","section":"Empresa"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  parseWeight(input, unit) {
+    var s = String(input == null ? '' : input).trim().toLowerCase().replace(/\s+/g, '');
+    var m = /^(\d+(?:[.,]\d+)?)(kg|g)?$/.exec(s);
+    if (!m) return null;
+    var u = m[2] || unit, parts = m[1].replace(',', '.').split('.'), dec = parts[1] || '';
+    if (u === 'g') { if (dec) return null; var g = parseInt(parts[0], 10); return g > 0 ? g : null; }
+    if (dec.length > 3) return null;
+    var grams = parseInt(parts[0], 10) * 1000 + parseInt((dec + '000').slice(0, 3), 10);
+    return grams > 0 ? grams : null;
+  }
+  kgText(g) { var r = g % 1000; return Math.floor(g / 1000) + (r ? ',' + ('00' + r).slice(-3).replace(/0+$/, '') : ''); }
+  formatWeight(g) { return g < 1000 ? g + ' g' : this.kgText(g) + ' kg'; }
+  cur() {
+    var s = this.state || {};
+    return { unit: s.unit || 'g', value: s.value == null ? '1500' : s.value, prep: s.prep == null ? true : s.prep };
+  }
+  setUnit(next) {
+    var c = this.cur();
+    if (c.unit === next) return;
+    var g = this.parseWeight(c.value, c.unit);
+    var value = g === null ? c.value : (next === 'g' ? String(g) : this.kgText(g));
+    this.setState({ unit: next, value: value, prep: c.prep });
+  }
+  renderVals() {
+    var self = this, c = this.cur();
+    var grams = this.parseWeight(c.value, c.unit), empty = String(c.value).trim() === '', bad = grams === null && !empty;
+    var hint = grams !== null ? '= ' + this.formatWeight(grams) + ' · se guarda ' + grams + ' g'
+      : empty ? 'Escribe gramos o kilos' : (c.unit === 'g' ? 'En gramos, sin decimales' : 'En kilos, 3 decimales como mucho');
+    return {
+      theme: this.props.theme ?? 'butcher',
+      weightValue: c.value,
+      weightHint: hint,
+      weightHintCls: bad ? 'pd-field__error' : 'pd-field__hint',
+      weightBoxCls: 'pd-input pd-input--num' + (bad ? ' pd-input--invalid' : ''),
+      isGrams: c.unit === 'g',
+      isKilos: c.unit === 'kg',
+      prep: c.prep,
+      onWeight: function (e) { self.setState({ unit: c.unit, value: e.target.value, prep: c.prep }); },
+      setGrams: function () { self.setUnit('g'); },
+      setKilos: function () { self.setUnit('kg'); },
+      togglePrep: function () { self.setState({ unit: c.unit, value: c.value, prep: !c.prep }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

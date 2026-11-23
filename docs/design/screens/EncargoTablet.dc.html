@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Encargo en tablet</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="pedidator-tokens.css">
+<link rel="stylesheet" href="ds/pedidator/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="pd pd-shell pd-shell--wide" data-theme="{{theme}}" style="width: 1180px; height: 820px">
+<header class="pd-header">
+<a class="pd-back" href="DiaTablet.dc.html" aria-label="Volver al día" style="color: var(--on-brand)"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"></path></svg></a>
+<span class="pd-header__company">Encargo de Bar La Plaça</span>
+<span class="pd-header__user">Marta</span>
+</header>
+<div class="pd-status pd-status--ok" role="status">
+<svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M8 12.3l2.7 2.7L16 9.5"></path></svg>
+Sincronizado · 10:42
+</div>
+<div style="flex: 1; min-height: 0; display: grid; grid-template-columns: 420px minmax(0, 1fr)">
+<aside class="pd-main pd-aside pd-scroll" style="border-right: 1px solid var(--line); background: var(--surface-raised)">
+<h1 class="pd-heading">Quién y cuándo</h1>
+<div class="pd-field">
+<label class="pd-field__label" for="t-customer">Cliente</label>
+<div class="pd-input"><input id="t-customer" readonly value="Bar La Plaça"></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: none">
+<div class="pd-field">
+<label class="pd-field__label" for="t-date">Día de recogida</label>
+<div class="pd-input"><input id="t-date" readonly value="Vie 18 dic"></div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="t-time">Hora</label>
+<div class="pd-input pd-input--num"><input id="t-time" readonly value="12:30"></div>
+</div>
+</div>
+<div class="pd-field">
+<span class="pd-field__label" id="t-important">Prioridad</span>
+<div class="pd-seg" role="group" aria-labelledby="t-important">
+<button type="button" aria-pressed="false">Normal</button>
+<button type="button" aria-pressed="true">Importante</button>
+</div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="t-notes">Notas del encargo</label>
+<div class="pd-input"><input id="t-notes" readonly value="Pasa a recogerlo su hijo"></div>
+</div>
+<span class="pd-badge pd-badge--prep" style="white-space: normal; border-radius: 8px; padding: 8px 10px; align-items: flex-start; flex: none"><svg class="pd-icon pd-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7.5V12l3 2"></path></svg>1 artículo se prepara el día anterior: saldrá el jueves 17 en «Preparar hoy para mañana».</span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; flex: none">
+<button class="pd-btn pd-btn--quiet" type="button"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0-8.5-12 M3 4v5h5 M12 7.5V12l3 2"></path></svg>Historial</button>
+<button class="pd-btn pd-btn--danger" type="button">Cancelar encargo</button>
+</div>
+</aside>
+<main class="pd-main pd-scroll" style="padding: 24px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none">
+<h2 class="pd-heading">Artículos</h2>
+<button class="pd-btn" type="button"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg>Añadir artículo</button>
+</div>
+<div class="pd-card" style="padding-top: 0; padding-bottom: 0">
+<div class="pd-item" style="cursor: default">
+<span class="pd-item__body"><span class="pd-item__name">Entrecot de ternera</span><span class="pd-item__detail"><span>fileteado fino</span></span></span>
+<span class="pd-item__qty">2,5 kg</span>
+<button class="pd-btn pd-btn--quiet" type="button">Editar</button>
+</div>
+<div class="pd-item" style="cursor: default">
+<span class="pd-item__body"><span class="pd-item__name">Butifarra</span></span>
+<span class="pd-item__qty">6 u</span>
+<button class="pd-btn pd-btn--quiet" type="button">Editar</button>
+</div>
+<div class="pd-item" style="cursor: default">
+<span class="pd-item__body"><span class="pd-item__name">Queso curado</span><span class="pd-item__detail"><span>en cuñas</span></span></span>
+<span class="pd-item__qty">750 g</span>
+<button class="pd-btn pd-btn--quiet" type="button">Editar</button>
+</div>
+</div>
+<div class="pd-card" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; border-color: var(--brand-strong); box-shadow: inset 0 0 0 1px var(--brand-strong)">
+<div class="pd-field">
+<label class="pd-field__label" for="t-item">Artículo</label>
+<div class="pd-input"><input id="t-item" readonly value="Redondo mechado"></div>
+<span class="pd-field__hint">La última vez: por peso, preparado el día anterior</span>
+</div>
+<div class="pd-field">
+<span class="pd-field__label" id="t-measure">Se pide por</span>
+<div class="pd-seg" role="group" aria-labelledby="t-measure">
+<button type="button" aria-pressed="false">Unidades</button>
+<button type="button" aria-pressed="true">Peso</button>
+</div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="t-weight">Cantidad</label>
+<div class="pd-weight">
+<div class="pd-input pd-input--num"><input id="t-weight" readonly value="1,5" aria-describedby="t-weight-hint"></div>
+<div class="pd-seg" role="group" aria-label="Unidad">
+<button type="button" aria-pressed="false">g</button>
+<button type="button" aria-pressed="true">kg</button>
+</div>
+</div>
+<span class="pd-field__hint" id="t-weight-hint">= 1,5 kg · se guarda 1500 g</span>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="t-note">Notas</label>
+<div class="pd-input"><input id="t-note" readonly value="atado, sin salsa"></div>
+</div>
+<button type="button" class="pd-switch" role="switch" aria-checked="true"><span class="pd-switch__track"></span>Preparar el día anterior</button>
+<div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px">
+<button class="pd-btn pd-btn--quiet" type="button"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"></path></svg>Precio (opcional)</button>
+<button class="pd-btn pd-btn--danger pd-btn--icon" type="button" aria-label="Quitar artículo"><svg class="pd-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16 M9 7V4h6v3 M6.5 7l1 13h9l1-13"></path></svg></button>
+</div>
+</div>
+<div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: auto; flex: none">
+<a class="pd-btn pd-btn--lg" href="DiaTablet.dc.html" style="color: var(--ink)">Descartar cambios</a>
+<a class="pd-btn pd-btn--primary pd-btn--lg" href="DiaTablet.dc.html" style="color: var(--on-brand); min-width: 220px">Guardar</a>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["neutral","butcher","fishmonger","greengrocer","bakery"],"default":"butcher","section":"Empresa"},"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { theme: this.props.theme ?? 'butcher' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Entrar</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="pedidator-tokens.css">
+<link rel="stylesheet" href="ds/pedidator/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div class="pd pd-shell" data-theme="neutral" style="width: 390px; height: 844px">
+<main class="pd-main" style="justify-content: center; gap: 20px; padding: 24px">
+<div>
+<h1 style="margin: 0; font: 800 44px/46px var(--font-display); letter-spacing: -0.02em">Pedidator</h1>
+<p style="margin: 8px 0 0; font: 400 16px/24px var(--font-sans); color: var(--ink-muted)">Los encargos del día, quién viene y a qué hora.</p>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="l-email">Correo</label>
+<div class="pd-input"><input id="l-email" type="email" readonly value="marta@carnisseriavila.example"></div>
+</div>
+<div class="pd-field">
+<label class="pd-field__label" for="l-pass">Contraseña</label>
+<div class="pd-input"><input id="l-pass" type="password" readonly value="contraseña"></div>
+</div>
+<a class="pd-btn pd-btn--primary pd-btn--lg pd-btn--block" href="Main.dc.html" style="color: var(--on-brand); flex: none">Entrar</a>
+<div class="pd-field">
+<span class="pd-field__label" id="l-lang">Idioma</span>
+<div class="pd-seg" role="group" aria-labelledby="l-lang">
+<button type="button" aria-pressed="false">Català</button>
+<button type="button" aria-pressed="true">Castellano</button>
+</div>
+</div>
+<p class="pd-muted" style="margin: 0">Sin conexión solo puedes entrar si ya has iniciado sesión antes en este dispositivo.</p>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

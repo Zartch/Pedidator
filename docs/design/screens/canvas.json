@@ -1,0 +1,42 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-22T13:04:36Z" },
+  "title": "Pedidator · Pantallas",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "Día de trabajo", "is_interactive": true },
+    "Encargo.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "Encargo", "is_interactive": true },
+    "Tickets.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "title": "Tickets pendientes" },
+    "Cliente.dc.html": { "x": 1410, "y": 0, "w": 390, "h": 844, "title": "Ficha de cliente" },
+    "Conflictos.dc.html": { "x": 1880, "y": 0, "w": 390, "h": 844, "title": "Conflictos" },
+    "Ajustes.dc.html": { "x": 2350, "y": 0, "w": 390, "h": 844, "title": "Ajustes de la empresa", "is_interactive": true },
+    "Login.dc.html": { "x": 2820, "y": 0, "w": 390, "h": 844, "title": "Entrar" },
+    "DiaTablet.dc.html": { "x": 0, "y": 1300, "w": 1180, "h": 820, "title": "Día de trabajo · tablet", "is_interactive": true },
+    "EncargoTablet.dc.html": { "x": 1260, "y": 1300, "w": 1180, "h": 820, "title": "Encargo · tablet" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Encargo.dc.html",
+    "Tickets.dc.html",
+    "Cliente.dc.html",
+    "Conflictos.dc.html",
+    "Ajustes.dc.html",
+    "Login.dc.html",
+    "DiaTablet.dc.html",
+    "EncargoTablet.dc.html"
+  ],
+  "notes": {
+    "t-movil": { "x": 0, "y": -300, "text": "Móvil", "kind": "title1", "maxW": 3210 },
+    "t-tablet": { "x": 0, "y": 1000, "text": "Tablet horizontal", "kind": "title1", "maxW": 2440 }
+  },
+  "designSystems": [
+    {
+      "title": "Pedidator Design System",
+      "namespace": "pedidator",
+      "artifact": "https://claude.ai/artifact/BsJiqR3vd3AosyapuLVxbL",
+      "version": "1795269774-7b09",
+      "copiedAt": "2026-11-22T13:04:36Z"
+    }
+  ]
+}

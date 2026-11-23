@@ -5,6 +5,7 @@ PWA offline-first y multiempresa para gestionar pedidos y tickets pendientes de 
 - Especificación: [docs/SPEC.md](docs/SPEC.md)
 - Roadmap de ejecución por pasos: [docs/ROADMAP.md](docs/ROADMAP.md)
 - Guía verificada de PocketBase: [docs/POCKETBASE.md](docs/POCKETBASE.md)
+- Sistema de estilos y maquetas de pantallas: [docs/design/ABOUT.md](docs/design/ABOUT.md)
 - Instrucciones para Claude Code: [CLAUDE.md](CLAUDE.md)
 
-Estado: especificación v3, pendiente de iniciar la fase 0 (paso F0-1 del roadmap).
+Estado: especificación v4, pendiente de iniciar la fase 0 (paso F0-1 del roadmap).

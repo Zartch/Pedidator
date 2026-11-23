@@ -30,6 +30,26 @@ Trabajas en el repositorio Pedidator. Ejecuta SOLO el paso <ID> de docs/ROADMAP.
    criterios NO verificados, dudas o supuestos que has tomado.
 ```
 
+### Prompt para arrancar una sesión de orquestación
+```
+Eres el orquestador del proyecto Pedidator. Lee CLAUDE.md y las secciones 1 a 3 de docs/ROADMAP.md.
+
+Ejecuta el siguiente bloque sin terminar de la tabla "Estado" (sección 2), paso a paso:
+1. Para cada paso, lanza UN subagente con el modelo que indica su título (haiku o sonnet) y la
+   "Plantilla del prompt de cada subagente", cambiando <ID>. Los pasos de una misma fila de
+   "En paralelo" puedes lanzarlos a la vez, cada uno en su worktree; el resto, en orden.
+2. Cuando un subagente termine, NO te fíes de su informe: ejecuta tú los comandos de "Hecho cuando"
+   y lee el diff. Si falla, devuélvele el error una vez; si vuelve a fallar, relánzalo con el modelo
+   siguiente; si falla otra vez, para y dime qué paso está mal definido.
+3. Con el paso verificado: marca su casilla en docs/ROADMAP.md, añade la línea al CHANGELOG.md,
+   haz commit y push a la rama de trabajo de esta sesión.
+4. No cambies contratos (sección 3 del roadmap), ni la SPEC, ni el sistema de estilos por tu cuenta:
+   si un paso lo necesita, para y pregúntame.
+5. Al llegar a la puerta del bloque, PARA. Dame: qué pasos se han hecho, qué criterios de aceptación
+   has verificado tú ejecutándolos, cuáles requieren prueba manual mía, y abre un PR hacia main.
+No empieces el bloque siguiente hasta que yo cierre la puerta.
+```
+
 ### Reglas del orquestador
 - Un paso = un subagente = un commit. No se mezclan pasos.
 - El orquestador **vuelve a ejecutar** los comandos de "Hecho cuando" y lee el diff antes de marcar el paso. El informe del subagente no es prueba.
@@ -135,6 +155,8 @@ deriveBrand(hex: string): { brand: string; onBrand: string; brandStrong: string;
 newId(): string                              // 15 chars [a-z0-9], crypto.getRandomValues
 ```
 
+Pantallas: `docs/design/screens/` tiene la maqueta de cada pantalla (tabla en `docs/design/ABOUT.md`). Un paso de interfaz reproduce su maqueta: mismos bloques, mismo orden, mismos textos de ejemplo traducidos a ca y es.
+
 Estilos: `docs/design/` es la copia en el repositorio del sistema de estilos (`README.md` con las reglas, `tokens.json`, `components.css` como referencia de cada componente y `derive-brand.js`). Los pasos de interfaz la leen y usan sus tokens; no inventan colores, tamaños ni tipografías.
 
 Formato de la subida (lo fijan F2-3 y F2-4): `OutboxOp` de SPEC §4.2 y la respuesta de SPEC §4.3.
@@ -220,7 +242,7 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 - **Hecho cuando:** `npm run check` pasa, con tests de cada regla de fusión de la outbox y de `getOrCreateCustomerByName`.
 
 ### F1-3 · Estructura de la app · `haiku`
-- **Lee:** SPEC §5 (párrafo inicial y lista de pantallas), `docs/design/README.md` y `docs/design/components.css` (bloques Button, Badge, AppShell, StatusBar).
+- **Lee:** SPEC §5 (párrafo inicial y lista de pantallas), `docs/design/ABOUT.md`, `docs/design/README.md`, `docs/design/components.css` (bloques Button, Badge, AppShell, StatusBar) y, para la estructura, `docs/design/screens/Main.dc.html` y `DiaTablet.dc.html` (cabecera, barra de estado, navegación).
 - **Dependencias nuevas:** `react-router-dom`, `date-fns`, `lucide-react`, componentes shadcn necesarios.
 - **Archivos:** `src/App.tsx`, `src/routes.tsx`, `src/components/layout/*`, `src/components/form/SafeForm.tsx`, `src/components/ui/{AppDialog,Badge}.tsx`, `src/theme/BrandTheme.tsx` (+ test), `src/pages/*Page.tsx` (vacías con título), `src/i18n/{ca,es}/{common,day,orderForm,archive,tickets,customers}.json`.
 - **Tareas:**
@@ -231,7 +253,7 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 - **Hecho cuando:** `npm run check` pasa; test de `SafeForm` (Enter no dispara `onSubmit`) y de `BrandTheme` (pone y quita las cuatro variables).
 
 ### F1-4 · Espacio de trabajo del día · `sonnet`
-- **Lee:** SPEC §5 punto 2 y §3 "Progreso" y "Preparar la víspera"; `docs/design/README.md` y los bloques DayWorkspace, OrderCard, ItemRow, Calendar y Progress de `docs/design/components.css`.
+- **Lee:** SPEC §5 punto 2 y §3 "Progreso" y "Preparar la víspera"; `docs/design/README.md` y los bloques DayWorkspace, OrderCard, ItemRow, Calendar y Progress de `docs/design/components.css`. **Maquetas:** `docs/design/screens/Main.dc.html` (móvil) y `DiaTablet.dc.html` (tablet).
 - **Archivos:** `src/pages/DayPage.tsx`, `src/components/day/{DayHeader,DayProgress,NextPickup,PrepAheadList,DayOrderList,OrderCard,ItemCheckRow,MonthCalendar,WeekStrip,DeliveredGroup}.tsx`, `src/lib/dates.ts` (+ test), `src/i18n/{ca,es}/day.json`.
 - **Tareas:**
   1. Día seleccionado en la URL (`/day/2026-12-17`; `/` = hoy en Madrid). Anterior, siguiente, "Hoy". Semana en móvil y mes en tablet, con las tres marcas por día: pedidos, importante, preparar la víspera (el día de recogida). Interruptor "Mostrar entregados" recordado en el dispositivo.
@@ -246,7 +268,7 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 - **Hecho cuando:** `npm run check` pasa, con tests de: marcar el último artículo deja el encargo como preparado y sube el progreso; desmarcarlo lo revierte; un artículo `prepDayBefore` de mañana aparece hoy y marcarlo aquí lo deja marcado en su encargo; entregado se pliega y sigue contando.
 
 ### F1-5 · Formulario de encargo · `sonnet`
-- **Lee:** SPEC §5 punto 3 (sin el historial) y §3 `order_items` entero; bloques Field, WeightField e ItemRow de `docs/design/components.css`.
+- **Lee:** SPEC §5 punto 3 (sin el historial) y §3 `order_items` entero; bloques Field, WeightField e ItemRow de `docs/design/components.css`. **Maquetas:** `docs/design/screens/Encargo.dc.html` (móvil) y `EncargoTablet.dc.html` (tablet).
 - **Archivos:** `src/pages/OrderFormPage.tsx`, `src/components/orders/{CustomerPicker,ItemsEditor,ItemEditorRow,WeightField,PriceDisclosure,OrderTotal}.tsx`, `src/i18n/{ca,es}/orderForm.json`.
 - **Tareas:**
   1. Crear y editar; cliente con sugerencias y "Crear cliente «X»"; fecha, hora, importante, notas. "Cancelar encargo" aparte, con confirmación. No se guarda sin al menos un artículo.
@@ -257,20 +279,20 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 - **Hecho cuando:** `npm run check` pasa, con tests de: `WeightField` (escribir `1500` en g y cambiar a kg muestra `1,5` y guarda 1500; escribir `750g` con el selector en kg guarda 750); crear un encargo sin ningún precio no muestra total; al poner precio a un artículo por peso sin peso real aparece el total con "≈".
 
 ### F1-6 · Archivo · `haiku`
-- **Lee:** SPEC §5 punto 2 ("Vista Archivo").
+- **Lee:** SPEC §5 punto 2 ("Vista Archivo"); `docs/design/README.md` y el bloque OrderCard de `docs/design/components.css` (sin maqueta propia: usa la tarjeta compacta, como en `screens/Cliente.dc.html`).
 - **Archivos:** `src/pages/ArchivePage.tsx`, `src/i18n/{ca,es}/archive.json`.
 - **Tareas:** lista de pedidos `delivered` y `cancelled` con búsqueda por cliente (por `nameKey`) y rango de fechas; enlaza al formulario.
 - **Hecho cuando:** `npm run check` pasa con un test de filtro.
 
 ### F1-7 · Tickets · `sonnet`
-- **Lee:** SPEC §3 `tickets`, §5 punto 4 (sin historial).
+- **Lee:** SPEC §3 `tickets`, §5 punto 4 (sin historial); `docs/design/README.md`. **Maqueta:** `docs/design/screens/Tickets.dc.html` (el diálogo de nuevo ticket no tiene maqueta: campos del bloque Field dentro de `AppDialog`).
 - **Dependencias nuevas:** `browser-image-compression`.
 - **Archivos:** `src/pages/TicketsPage.tsx`, `src/components/tickets/{TicketGroup,TicketDialog,PhotoViewer}.tsx`, `src/lib/photo.ts`, `src/i18n/{ca,es}/tickets.json`.
 - **Tareas:** agrupados por cliente con total por cliente y total general; mensaje centrado si no hay; alta (cliente, importe, notas, foto de cámara o galería); la foto se comprime (máx. 1600 px, JPEG 0,7) y se genera miniatura de 300 px; ambas van a `blobs`; visor a pantalla completa; marcar pagado (rellena `paidAt`).
 - **Hecho cuando:** `npm run check` pasa con test de agrupación y totales.
 
 ### F1-8 · Clientes · `haiku`
-- **Lee:** SPEC §5 punto 5.
+- **Lee:** SPEC §5 punto 5; `docs/design/README.md`. **Maqueta:** `docs/design/screens/Cliente.dc.html` (la lista de clientes no tiene maqueta: buscador y tarjetas compactas).
 - **Archivos:** `src/pages/{CustomersPage,CustomerPage}.tsx`, `src/i18n/{ca,es}/customers.json`.
 - **Tareas:** lista con búsqueda; ficha con teléfono y notas editables y sus pedidos y tickets. Sin fusión (es de la fase 5).
 - **Hecho cuando:** `npm run check` pasa.
@@ -376,7 +398,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 ## 7. Fase 2: cliente
 
 ### F2-8 · Sesión y login · `sonnet`
-- **Lee:** SPEC §4.6, §5 punto 1.
+- **Lee:** SPEC §4.6, §5 punto 1. **Maqueta:** `docs/design/screens/Login.dc.html`.
 - **Archivos:** `src/auth/session.ts`, `src/sync/api/client.ts`, `src/pages/LoginPage.tsx`, `src/components/layout/*`, `src/data/session.ts`, `src/i18n/{ca,es}/auth.json`.
 - **Tareas:** login con el SDK (solo dentro de `src/auth` y `src/sync`); al entrar se aplica el `brandColor` de la empresa con `BrandTheme`; la sesión guarda usuario, rol y empresa en el dispositivo para arrancar sin conexión; abre la base de la empresa; `authRefresh` al recuperar conexión; cerrar sesión con aviso si hay cambios pendientes; rutas protegidas por rol; modo demo intacto. Excepción a la regla 1: las pantallas que solo funcionan con conexión llaman a funciones de `src/sync/api/*`, nunca al SDK.
 - **Hecho cuando:** `npm run check` pasa.
@@ -392,7 +414,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Hecho cuando:** `npm run check && npm run test:integration` pasan (bajada inicial, incremental, borrados, y un cambio hecho por otro usuario llega por tiempo real).
 
 ### F2-10 · Subida y conflictos (mínimo) · `sonnet`
-- **Lee:** SPEC §4.2, §4.3, §4.4.
+- **Lee:** SPEC §4.2, §4.3, §4.4. **Maqueta:** `docs/design/screens/Conflictos.dc.html`.
 - **Archivos:** `src/sync/push.ts` y tests, `src/sync/engine.ts`, `src/pages/ConflictsPage.tsx`, `src/components/layout/ConflictBanner.tsx`, `src/i18n/{ca,es}/conflicts.json`, `tests/integration/push-client.test.ts`.
 - **Tareas:**
   1. Vaciar la outbox en orden, por lotes de 50, solo operaciones del usuario actual. Tratar cada `status`: `ok`/`merged` → quitar de la outbox y actualizar `version`; `mergedInto` → reasignar registros locales y operaciones pendientes al id existente y eliminar el duplicado local; `conflict` → mover a `conflicts` y retener las operaciones posteriores del mismo registro; `forbidden`/`invalid`/`id_taken` → mover a `conflicts` como error no resoluble (solo "Descartar").
@@ -408,7 +430,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Hecho cuando:** `npm run check` pasa con test del formateo de una entrada.
 
 ### F2-12 · Ajustes de empresa y usuarios · `haiku`
-- **Lee:** SPEC §5 punto 7.
+- **Lee:** SPEC §5 punto 7; bloque ThemeStudio de `docs/design/README.md` ("Tema por empresa"). **Maqueta:** `docs/design/screens/Ajustes.dc.html`.
 - **Archivos:** `src/sync/api/admin.ts`, `src/pages/{SettingsPage,AccountPage}.tsx`, `src/i18n/{ca,es}/settings.json`.
 - **Tareas:** formulario de empresa, con el **color de la empresa** (selector, vista previa con cabecera, botón y una tarjeta, y los avisos de `deriveBrand`); lista de usuarios con alta, rol y baja; perfil propio (nombre, idioma, contraseña). Solo visible para `company_admin` y `platform_admin`. Los botones "Enviar resumen ahora" y "Exportar JSON" quedan para F4-3.
 - **Hecho cuando:** `npm run check` pasa.
@@ -460,7 +482,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Hecho cuando:** `npm run check` pasa con un test por cada uno de los tres estados.
 
 ### F3-5 · Pantalla de conflictos completa · `sonnet`
-- **Lee:** SPEC §4.4.
+- **Lee:** SPEC §4.4. **Maqueta:** `docs/design/screens/Conflictos.dc.html`.
 - **Archivos:** `src/pages/ConflictsPage.tsx`, `src/components/conflicts/*`, `src/sync/push.ts`, `src/i18n/{ca,es}/conflicts.json`.
 - **Tareas:** comparación por campos con nombres y valores formateados (dinero, peso, fechas, estados); caso borrado en el servidor con "Descartar" y "Volver a crearlo con mis cambios"; al resolver, se liberan las operaciones retenidas del registro.
 - **Hecho cuando:** `npm run check && npm run test:integration` pasan.
