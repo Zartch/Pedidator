@@ -43,7 +43,7 @@ export function AppDialog({ open, title, onClose, children, footer }: Props) {
       ref={ref}
       aria-labelledby={titleId}
       onCancel={keepOpen}
-      className="m-auto flex max-h-[calc(100svh-2rem)] w-[min(calc(100vw-2rem),36rem)] max-w-none flex-col overflow-hidden rounded-lg border border-line bg-surface-raised p-0 text-ink shadow-overlay backdrop:bg-ink/40 open:flex"
+      className="m-auto max-h-[calc(100svh-2rem)] w-[min(calc(100vw-2rem),36rem)] max-w-none flex-col overflow-hidden rounded-lg border border-line bg-surface-raised p-0 text-ink shadow-overlay backdrop:bg-ink/40 open:flex"
     >
       <div className="flex min-h-14 items-center gap-3 border-b border-line px-5">
         <h2
