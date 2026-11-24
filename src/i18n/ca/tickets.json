@@ -1,3 +1,37 @@
 {
-  "title": "Tickets"
+  "title": "Tickets pendents",
+  "total": "Total pendent",
+  "empty": "No hi ha tickets pendents",
+  "new": "Nou ticket",
+  "unknownCustomer": "Client desconegut",
+  "markPaid": "Marca com a pagat",
+  "markPaidShort": "Marca pagat",
+  "photo": {
+    "label": "Foto del ticket",
+    "none": "Sense foto",
+    "placeholder": "Foto",
+    "open": "Obre la foto",
+    "viewerTitle": "Foto del ticket",
+    "close": "Tanca",
+    "unavailable": "La foto encara no està disponible en aquest dispositiu"
+  },
+  "dialog": {
+    "title": "Nou ticket",
+    "customer": "Client",
+    "customerHint": "Tria un client o escriu-ne el nom per crear-lo",
+    "newCustomer": "Client nou: {{name}}",
+    "amount": "Import",
+    "notes": "Notes",
+    "photo": "Foto",
+    "takePhoto": "Fes una foto",
+    "chooseGallery": "Tria de la galeria",
+    "removePhoto": "Treu la foto",
+    "preview": "Previsualització de la foto",
+    "save": "Desa",
+    "saving": "Desant…",
+    "cancel": "Cancel·la",
+    "errorCustomer": "Indica el client",
+    "errorAmount": "Indica un import vàlid",
+    "errorSave": "No s'ha pogut desar el ticket"
+  }
 }

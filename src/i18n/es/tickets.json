@@ -1,3 +1,37 @@
 {
-  "title": "Tickets"
+  "title": "Tickets pendientes",
+  "total": "Total pendiente",
+  "empty": "No hay tickets pendientes",
+  "new": "Nuevo ticket",
+  "unknownCustomer": "Cliente desconocido",
+  "markPaid": "Marcar como pagado",
+  "markPaidShort": "Marcar pagado",
+  "photo": {
+    "label": "Foto del ticket",
+    "none": "Sin foto",
+    "placeholder": "Foto",
+    "open": "Abrir la foto",
+    "viewerTitle": "Foto del ticket",
+    "close": "Cerrar",
+    "unavailable": "La foto aún no está disponible en este dispositivo"
+  },
+  "dialog": {
+    "title": "Nuevo ticket",
+    "customer": "Cliente",
+    "customerHint": "Elige un cliente o escribe su nombre para crearlo",
+    "newCustomer": "Cliente nuevo: {{name}}",
+    "amount": "Importe",
+    "notes": "Notas",
+    "photo": "Foto",
+    "takePhoto": "Hacer foto",
+    "chooseGallery": "Elegir de la galería",
+    "removePhoto": "Quitar la foto",
+    "preview": "Vista previa de la foto",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "errorCustomer": "Indica el cliente",
+    "errorAmount": "Indica un importe válido",
+    "errorSave": "No se ha podido guardar el ticket"
+  }
 }
