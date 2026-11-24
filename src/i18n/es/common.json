@@ -1,5 +1,34 @@
 {
   "app": {
     "name": "Pedidator"
+  },
+  "mode": {
+    "demo": "MODO DEMO"
+  },
+  "nav": {
+    "label": "Secciones",
+    "day": "Día",
+    "tickets": "Tickets",
+    "customers": "Clientes",
+    "archive": "Archivo"
+  },
+  "language": {
+    "label": "Idioma",
+    "ca": "Català",
+    "es": "Castellano"
+  },
+  "brand": {
+    "label": "Color de la empresa",
+    "neutral": "Neutro",
+    "butcher": "Carnicería",
+    "fishmonger": "Pescadería",
+    "greengrocer": "Frutería",
+    "bakery": "Panadería"
+  },
+  "dialog": {
+    "close": "Cerrar"
+  },
+  "session": {
+    "error": "No se pudo abrir la base de datos local."
   }
 }
