@@ -1,3 +1,76 @@
 {
-  "title": "Encàrrec"
+  "title": "Encàrrec",
+  "titleNew": "Nou encàrrec",
+  "titleEdit": "Edita l'encàrrec",
+  "loading": "Carregant…",
+  "notFound": "No s'ha trobat l'encàrrec",
+  "whoWhen": "Qui i quan",
+  "customer": {
+    "label": "Client",
+    "hint": "Tria un client o escriu-ne el nom",
+    "create": "Crea el client «{{name}}»",
+    "error": "Indica el client"
+  },
+  "date": "Dia de recollida",
+  "time": "Hora",
+  "priority": {
+    "label": "Prioritat",
+    "normal": "Normal",
+    "important": "Important"
+  },
+  "notes": "Notes de l'encàrrec",
+  "items": {
+    "title": "Articles",
+    "add": "Afegeix un altre article",
+    "errorNone": "Afegeix com a mínim un article",
+    "errorWeight": "Revisa el pes d'algun article",
+    "errorPrice": "Revisa el preu d'algun article"
+  },
+  "item": {
+    "name": "Article",
+    "measure": "Es demana per",
+    "units": "Unitats",
+    "weight": "Pes",
+    "quantity": "Quantitat",
+    "notes": "Notes",
+    "prep": "Preparar el dia abans",
+    "done": "Preparat",
+    "up": "Puja l'article",
+    "down": "Baixa l'article",
+    "remove": "Esborra l'article",
+    "number": "Article {{n}}"
+  },
+  "weight": {
+    "unit": "Unitat",
+    "equals": "= {{value}}",
+    "emptyHint": "Escriu grams o quilos",
+    "badGrams": "En grams, sense decimals",
+    "badKilos": "En quilos, 3 decimals com a màxim"
+  },
+  "price": {
+    "toggle": "Preu (opcional)",
+    "unitPrice": "Preu per unitat",
+    "kiloPrice": "Preu per quilo",
+    "realWeight": "Pes real",
+    "invalid": "Preu no vàlid"
+  },
+  "total": {
+    "label": "Total",
+    "estimated": "≈ {{amount}}",
+    "unpriced_one": "{{count}} article sense preu",
+    "unpriced_other": "{{count}} articles sense preu"
+  },
+  "actions": {
+    "save": "Desa",
+    "saving": "Desant…",
+    "discard": "Cancel·la",
+    "cancelOrder": "Cancel·la l'encàrrec",
+    "errorSave": "No s'ha pogut desar l'encàrrec"
+  },
+  "cancelDialog": {
+    "title": "Cancel·lar l'encàrrec",
+    "text": "L'encàrrec es mourà a l'arxiu com a cancel·lat.",
+    "confirm": "Sí, cancel·la'l",
+    "back": "Torna"
+  }
 }
