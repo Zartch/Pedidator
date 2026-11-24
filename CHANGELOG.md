@@ -16,3 +16,4 @@
 - F1-5: formulario de encargo: cliente con sugerencias, artículos por unidades o peso (`WeightField` g/kg), preparar el día anterior, precio opcional plegado y total estimado.
 - F1-9: datos de ejemplo y borrado en modo demo, `navigator.storage.persist()`, aviso de instalación en Safari de iOS y workflow de GitHub Pages.
 - F1-10: pruebas de extremo a extremo de la demo (encargos, preparar la víspera, entregar, tickets, idioma y recarga sin conexión).
+- G1: correcciones del code review de la fase 1 (entregados siempre visibles y recuperables, diálogos, ticket con foto atómico, validación del formulario de encargo, limpieza de fotos, "no encontrado") y base de GitHub Pages según el nombre del repositorio.
