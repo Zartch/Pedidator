@@ -1,3 +1,81 @@
 {
-  "title": "Día"
+  "title": "Día",
+  "header": {
+    "previous": "Día anterior",
+    "next": "Día siguiente",
+    "today": "Hoy"
+  },
+  "calendar": {
+    "week": "Semana del {{from}} al {{to}}",
+    "month": "Calendario de {{month}}",
+    "monthPrevious": "Mes anterior",
+    "monthNext": "Mes siguiente",
+    "dow": {
+      "mon": "L",
+      "tue": "M",
+      "wed": "X",
+      "thu": "J",
+      "fri": "V",
+      "sat": "S",
+      "sun": "D"
+    },
+    "legend": {
+      "orders": "Con encargos",
+      "important": "Importante",
+      "prep": "Preparar la víspera"
+    },
+    "mark": {
+      "orders": "con encargos",
+      "important": "importante",
+      "prep": "preparar la víspera"
+    },
+    "showDelivered": "Mostrar entregados"
+  },
+  "progress": {
+    "label": "Encargos preparados",
+    "title_one": "{{prepared}} de {{count}} encargo preparado",
+    "title_other": "{{prepared}} de {{count}} encargos preparados",
+    "empty": "Ningún encargo para este día",
+    "toPrepare": "{{count}} por preparar",
+    "delivered_one": "{{count}} entregado",
+    "delivered_other": "{{count}} entregados",
+    "monthDelivered": "Entregados en {{month}}: {{count}}"
+  },
+  "next": {
+    "label": "Próxima recogida",
+    "at": "a las {{time}}"
+  },
+  "prep": {
+    "title": "Preparar hoy para mañana",
+    "count": "{{done}}/{{total}}"
+  },
+  "orders": {
+    "headingToday": "Encargos de hoy, por hora de recogida",
+    "heading": "Encargos del día, por hora de recogida",
+    "empty": "No hay encargos este día",
+    "new": "Nuevo encargo"
+  },
+  "card": {
+    "toPrepare": "Por preparar · {{done}}/{{total}}",
+    "prepared": "Preparado",
+    "delivered": "Entregado",
+    "important": "Importante",
+    "noItems": "Sin artículos",
+    "deliver": "Entregar",
+    "unknownCustomer": "Cliente sin nombre",
+    "next": "Próxima recogida"
+  },
+  "item": {
+    "prepDayBefore": "Día anterior",
+    "late": "Había que prepararlo ayer"
+  },
+  "deliverDialog": {
+    "title": "Entregar el encargo",
+    "message": "Este encargo aún no está preparado del todo ({{done}} de {{total}} artículos). ¿Quieres entregarlo igualmente?",
+    "confirm": "Entregar igualmente",
+    "cancel": "Cancelar"
+  },
+  "deliveredGroup": {
+    "title": "Entregados ({{count}})"
+  }
 }
