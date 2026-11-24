@@ -42,6 +42,7 @@ export default defineConfig([
     'playwright-report',
     'test-results',
     'pb/pb_data',
+    '.claude',
   ]),
   {
     files: ['**/*.{ts,tsx}'],
