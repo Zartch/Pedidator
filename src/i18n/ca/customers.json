@@ -1,4 +1,27 @@
 {
   "title": "Clients",
-  "customerTitle": "Fitxa del client"
+  "searchLabel": "Cerca de client",
+  "searchPlaceholder": "Nom del client",
+  "empty": "Encara no hi ha clients.",
+  "noMatches": "Cap client coincideix amb la cerca.",
+  "loading": "Carregant…",
+  "back": "Tornar a clients",
+  "customerTitle": "Fitxa del client",
+  "phone": "Telèfon",
+  "notes": "Notes",
+  "save": "Guardar",
+  "saved": "Canvis guardats.",
+  "saveError": "No s'han pogut guardar els canvis.",
+  "orders": "Encàrrecs",
+  "noOrders": "Sense encàrrecs.",
+  "orderStatus": {
+    "pending": "Per entregar",
+    "delivered": "Entregat",
+    "cancelled": "Cancel·lat"
+  },
+  "tickets": "Tickets",
+  "noTickets": "Sense tickets.",
+  "pendingTotal": "Pendent: {{amount}}",
+  "paid": "Pagat",
+  "unpaid": "Pendent"
 }

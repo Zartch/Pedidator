@@ -1,4 +1,27 @@
 {
   "title": "Clientes",
-  "customerTitle": "Ficha del cliente"
+  "searchLabel": "Buscar cliente",
+  "searchPlaceholder": "Nombre del cliente",
+  "empty": "Todavía no hay clientes.",
+  "noMatches": "Ningún cliente coincide con la búsqueda.",
+  "loading": "Cargando…",
+  "back": "Volver a clientes",
+  "customerTitle": "Ficha del cliente",
+  "phone": "Teléfono",
+  "notes": "Notas",
+  "save": "Guardar",
+  "saved": "Cambios guardados.",
+  "saveError": "No se han podido guardar los cambios.",
+  "orders": "Encargos",
+  "noOrders": "Sin encargos.",
+  "orderStatus": {
+    "pending": "Por entregar",
+    "delivered": "Entregado",
+    "cancelled": "Cancelado"
+  },
+  "tickets": "Tickets",
+  "noTickets": "Sin tickets.",
+  "pendingTotal": "Pendiente: {{amount}}",
+  "paid": "Pagado",
+  "unpaid": "Pendiente"
 }
