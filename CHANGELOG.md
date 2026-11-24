@@ -9,3 +9,4 @@
 - F1-1: dominio compartido en `shared/` (tipos, pesos, progreso y días de Madrid, importes, dinero, `nameKey`, `deriveBrand`) y `newId`.
 - F1-2: base local Dexie por empresa, `mutate` como único punto de escritura con fusión de la outbox, repositorios y consultas reactivas (`src/data`).
 - F1-3: estructura de la app: rutas, AppShell con navegación móvil/tablet, `BrandTheme`, selector de idioma, modo demo, `SafeForm`, `AppDialog`, `Badge` y `Button`.
+- F1-6: archivo de encargos entregados y cancelados con búsqueda por cliente y rango de fechas.
