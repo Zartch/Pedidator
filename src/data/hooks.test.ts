@@ -1,6 +1,10 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  queryArchivedOrders,
+  queryCustomer,
+  queryCustomerTickets,
+  queryMonthDeliveredCount,
   queryCustomerOrders,
   queryDayOrders,
   queryMonthMarks,
@@ -11,7 +15,7 @@ import {
 } from './hooks'
 import { getOrCreateCustomerByName } from './repo/customers'
 import { setItemDone } from './repo/orderItems'
-import { cancelOrder, createOrder } from './repo/orders'
+import { cancelOrder, createOrder, deliverOrder } from './repo/orders'
 import { createTicket, markTicketPaid } from './repo/tickets'
 import { closeSession, requireSession, startSession } from './session'
 
@@ -178,5 +182,72 @@ describe('customer orders', () => {
       '2026-12-20',
       '2026-12-17',
     ])
+  })
+})
+
+describe('archive and counts', () => {
+  async function seed() {
+    const ana = await getOrCreateCustomerByName('Ana Pérez')
+    const pau = await getOrCreateCustomerByName('Pau')
+    const mk = async (c: string, at: string) =>
+      (
+        await createOrder({ customer: c, pickupAt: at }, [
+          { name: 'A', measure: 'unit' },
+        ])
+      ).order
+    const o1 = await mk(ana.id, '2026-12-05T10:00:00.000Z')
+    const o2 = await mk(pau.id, '2026-12-10T10:00:00.000Z')
+    const o3 = await mk(ana.id, '2026-11-30T23:30:00.000Z') // Madrid: 1 Dec
+    const o4 = await mk(ana.id, '2026-12-20T10:00:00.000Z') // stays pending
+    await deliverOrder(o1.id)
+    await cancelOrder(o2.id)
+    await deliverOrder(o3.id)
+    return { ana, pau, o1, o2, o3, o4 }
+  }
+
+  it('lists delivered and cancelled newest first, never pending', async () => {
+    const { o1, o2, o3 } = await seed()
+    const r = await queryArchivedOrders(db(), {})
+    expect(r.map((d) => d.order.id)).toEqual([o2.id, o1.id, o3.id])
+    expect(r[0].customer?.name).toBe('Pau')
+    expect(r[0].items).toHaveLength(1)
+  })
+
+  it('filters by customer nameKey substring and inclusive Madrid day range', async () => {
+    const { o1, o3 } = await seed()
+    expect(
+      (await queryArchivedOrders(db(), { text: 'PEREZ' })).map(
+        (d) => d.order.id,
+      ),
+    ).toEqual([o1.id, o3.id])
+    const range = await queryArchivedOrders(db(), {
+      fromDay: '2026-12-01',
+      toDay: '2026-12-05',
+    })
+    expect(range.map((d) => d.order.id)).toEqual([o1.id, o3.id])
+    expect(
+      await queryArchivedOrders(db(), {
+        fromDay: '2026-12-06',
+        toDay: '2026-12-09',
+      }),
+    ).toEqual([])
+  })
+
+  it('counts delivered orders of the Madrid month', async () => {
+    await seed()
+    expect(await queryMonthDeliveredCount(db(), '2026-12')).toBe(2)
+    expect(await queryMonthDeliveredCount(db(), '2026-11')).toBe(0)
+  })
+
+  it('customer and customer tickets (paid and pending, newest first)', async () => {
+    const a = await getOrCreateCustomerByName('Ana')
+    expect((await queryCustomer(db(), a.id))?.name).toBe('Ana')
+    expect(await queryCustomer(db(), 'nope')).toBeUndefined()
+    const t1 = await createTicket({ customer: a.id, amountCents: 1 })
+    await new Promise((r) => setTimeout(r, 5))
+    const t2 = await createTicket({ customer: a.id, amountCents: 2 })
+    await markTicketPaid(t1.id)
+    const r = await queryCustomerTickets(db(), a.id)
+    expect(r.map((t) => t.id)).toEqual([t2.id, t1.id])
   })
 })

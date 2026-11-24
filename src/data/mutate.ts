@@ -69,7 +69,7 @@ function newOp(
   baseValues: Record<string, unknown>,
 ): OutboxOp {
   return {
-    opId: newId(),
+    opId: crypto.randomUUID(),
     company: ctx.companyId,
     collection,
     recordId,

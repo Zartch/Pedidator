@@ -7,6 +7,7 @@ import {
   requireSession,
   startDemoSession,
   startSession,
+  subscribeSession,
 } from './session'
 
 afterEach(closeSession)
@@ -56,5 +57,21 @@ describe('session', () => {
       'outbox',
       'tickets',
     ])
+  })
+
+  it('subscribeSession notifies on start, change and close, and unsubscribes', async () => {
+    let calls = 0
+    const off = subscribeSession(() => calls++)
+    await startSession({ companyId: 'sub1', userId: 'u', syncEnabled: false })
+    const afterStart = calls
+    expect(afterStart).toBeGreaterThan(0)
+    await startSession({ companyId: 'sub2', userId: 'u', syncEnabled: false })
+    expect(calls).toBeGreaterThan(afterStart)
+    const beforeClose = calls
+    closeSession()
+    expect(calls).toBe(beforeClose + 1)
+    off()
+    await startSession({ companyId: 'sub3', userId: 'u', syncEnabled: false })
+    expect(calls).toBe(beforeClose + 1)
   })
 })

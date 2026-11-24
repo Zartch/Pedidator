@@ -81,6 +81,16 @@ describe('create', () => {
   })
 })
 
+describe('opId', () => {
+  it('is a uuid', async () => {
+    await newTicket()
+    const [op] = await db.outbox.toArray()
+    expect(op.opId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    )
+  })
+})
+
 describe('update merging', () => {
   it('update on update merges patches and keeps the original base', async () => {
     const t = await newTicket()

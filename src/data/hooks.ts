@@ -2,12 +2,13 @@
  * Read side of the UI. Each hook wraps a pure async query that takes the
  * database explicitly, so the queries can be tested without React.
  */
+import { useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { nameKey } from '@shared/nameKey'
 import { madridDay, needsPrepAhead } from '@shared/progress'
 import type { Customer, Measure, Order, OrderItem, Ticket } from '@shared/types'
 import type { PedidatorDb } from './db'
-import { getSession } from './session'
+import { getSession, subscribeSession } from './session'
 
 export type DayOrder = {
   order: Order
@@ -320,17 +321,98 @@ export async function queryCustomerOrders(
     .sort((a, b) => b.pickupAt.localeCompare(a.pickupAt))
 }
 
+export type ArchiveFilter = { text?: string; fromDay?: string; toDay?: string }
+
+/**
+ * Delivered and cancelled orders (not deleted). `text` is matched as a substring
+ * of the customer's nameKey; `fromDay`/`toDay` are inclusive Madrid days.
+ * Newest pickup first.
+ */
+export async function queryArchivedOrders(
+  db: PedidatorDb,
+  filter: ArchiveFilter = {},
+): Promise<DayOrder[]> {
+  const { fromDay, toDay } = filter
+  const key = nameKey(filter.text ?? '')
+  const orders = (
+    await db.orders.orderBy('pickupAt').reverse().toArray()
+  ).filter((o) => {
+    if (o.deleted || o.status === 'pending') return false
+    if (fromDay || toDay) {
+      const day = madridDay(o.pickupAt)
+      if (fromDay && day < fromDay) return false
+      if (toDay && day > toDay) return false
+    }
+    return true
+  })
+  const [items, customers] = await Promise.all([
+    itemsByOrder(
+      db,
+      orders.map((o) => o.id),
+    ),
+    customersById(
+      db,
+      orders.map((o) => o.customer),
+    ),
+  ])
+  return orders
+    .map((order) => ({
+      order,
+      customer: customers.get(order.customer),
+      items: items.get(order.id) ?? [],
+    }))
+    .filter((d) => !key || (d.customer?.nameKey ?? '').includes(key))
+}
+
+/** Number of delivered orders picked up in a Madrid month ("YYYY-MM"). */
+export async function queryMonthDeliveredCount(
+  db: PedidatorDb,
+  month: string,
+): Promise<number> {
+  const [y, m] = month.split('-').map(Number)
+  const last = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+  const orders = await ordersBetween(db, `${month}-01`, last)
+  return orders.filter((o) => o.status === 'delivered').length
+}
+
+export async function queryCustomer(
+  db: PedidatorDb,
+  id: string,
+): Promise<Customer | undefined> {
+  return db.customers.get(id)
+}
+
+/** Live tickets of a customer, paid and unpaid, newest first. */
+export async function queryCustomerTickets(
+  db: PedidatorDb,
+  customerId: string,
+): Promise<Ticket[]> {
+  const tickets = await db.tickets
+    .where('customer')
+    .equals(customerId)
+    .toArray()
+  return tickets
+    .filter((t) => !t.deleted)
+    .sort((a, b) => b.created.localeCompare(a.created))
+}
+
 // ---- hooks -------------------------------------------------------------------
+
+/** Current session (db + context); re-renders when it starts, changes company or closes. */
+export function useSession() {
+  return useSyncExternalStore(subscribeSession, getSession, getSession)
+}
 
 /** Runs `query` against the current session database; `undefined` while loading or with no session. */
 function useDbQuery<T>(
   query: (db: PedidatorDb) => Promise<T>,
   deps: unknown[],
 ): T | undefined {
-  return useLiveQuery(() => {
-    const s = getSession()
-    return s ? query(s.db) : undefined
-  }, deps)
+  const session = useSession()
+  return useLiveQuery(
+    () => (session ? query(session.db) : undefined),
+    [session, ...deps],
+  )
 }
 
 export const useDayOrders = (day: string) =>
@@ -360,3 +442,21 @@ export const useCustomers = () => useDbQuery(queryCustomers, [])
 
 export const useCustomerOrders = (customerId: string) =>
   useDbQuery((db) => queryCustomerOrders(db, customerId), [customerId])
+
+export const useArchivedOrders = (filter: ArchiveFilter) =>
+  useDbQuery(
+    (db) => queryArchivedOrders(db, filter),
+    [filter.text, filter.fromDay, filter.toDay],
+  )
+
+export const useMonthDeliveredCount = (month: string) =>
+  useDbQuery((db) => queryMonthDeliveredCount(db, month), [month])
+
+export const useCustomer = (id: string | undefined) =>
+  useDbQuery(
+    (db) => (id ? queryCustomer(db, id) : Promise.resolve(undefined)),
+    [id],
+  )
+
+export const useCustomerTickets = (customerId: string) =>
+  useDbQuery((db) => queryCustomerTickets(db, customerId), [customerId])

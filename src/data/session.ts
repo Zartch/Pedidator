@@ -11,8 +11,23 @@ export type SessionContext = {
 export const DEMO_COMPANY_ID = 'demo'
 export const DEMO_USER_ID = 'demo-user'
 
-let currentDb: PedidatorDb | null = null
-let currentCtx: SessionContext | null = null
+type Session = { db: PedidatorDb; ctx: SessionContext }
+
+let current: Session | null = null
+const listeners = new Set<() => void>()
+
+function setCurrent(next: Session | null): void {
+  current = next
+  for (const cb of [...listeners]) cb()
+}
+
+/** Calls `cb` whenever the session starts, changes or closes. Returns the unsubscribe function. */
+export function subscribeSession(cb: () => void): () => void {
+  listeners.add(cb)
+  return () => {
+    listeners.delete(cb)
+  }
+}
 
 /** Device id stored in `meta`; created once per company database. */
 export async function ensureDeviceId(db: PedidatorDb): Promise<string> {
@@ -31,9 +46,9 @@ export async function startSession(
   const db = openCompanyDb(input.companyId)
   const deviceId = input.deviceId ?? (await ensureDeviceId(db))
   const ctx: SessionContext = { ...input, deviceId }
-  currentDb = db
-  currentCtx = ctx
-  return { db, ctx }
+  const session = { db, ctx }
+  setCurrent(session)
+  return session
 }
 
 /** Demo mode: company `demo`, no synchronisation. */
@@ -46,13 +61,13 @@ export function startDemoSession() {
 }
 
 export function closeSession(): void {
-  currentDb?.close()
-  currentDb = null
-  currentCtx = null
+  if (!current) return
+  current.db.close()
+  setCurrent(null)
 }
 
 export function getSession(): { db: PedidatorDb; ctx: SessionContext } | null {
-  return currentDb && currentCtx ? { db: currentDb, ctx: currentCtx } : null
+  return current
 }
 
 export function requireSession(): { db: PedidatorDb; ctx: SessionContext } {
