@@ -14,3 +14,4 @@
 - F1-7: tickets pendientes agrupados por cliente con totales, alta con foto comprimida y miniatura en `blobs`, visor y marcar pagado.
 - F1-4: espacio de trabajo del día: calendario (semana/mes) con marcas, progreso, próxima recogida, "Preparar hoy para mañana", tarjetas con artículos marcables y entregados plegados; `src/lib/dates.ts`.
 - F1-5: formulario de encargo: cliente con sugerencias, artículos por unidades o peso (`WeightField` g/kg), preparar el día anterior, precio opcional plegado y total estimado.
+- F1-9: datos de ejemplo y borrado en modo demo, `navigator.storage.persist()`, aviso de instalación en Safari de iOS y workflow de GitHub Pages.
