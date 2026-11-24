@@ -8,3 +8,4 @@
 - F0-4: CI en GitHub Actions (check, build y e2e de humo) y reglas ESLint de zonas de importación (`pocketbase`, `dexie`, `shared/`).
 - F1-1: dominio compartido en `shared/` (tipos, pesos, progreso y días de Madrid, importes, dinero, `nameKey`, `deriveBrand`) y `newId`.
 - F1-2: base local Dexie por empresa, `mutate` como único punto de escritura con fusión de la outbox, repositorios y consultas reactivas (`src/data`).
+- F1-3: estructura de la app: rutas, AppShell con navegación móvil/tablet, `BrandTheme`, selector de idioma, modo demo, `SafeForm`, `AppDialog`, `Badge` y `Button`.
