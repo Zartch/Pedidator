@@ -1,6 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import { FlaskConical } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
 
 // Example brands from docs/design/tokens.json (--demo-*). `null` is the neutral theme.
 const DEMO_BRANDS = [
@@ -16,14 +14,13 @@ type Props = {
   onBrandColorChange: (color: string | null) => void
 }
 
-/** Demo only: a notice that data is local, and a picker for the example company colors. */
+/** Demo only: a picker for the example company colors. The data notice is DemoBanner. */
 export function DemoBar({ brandColor, onBrandColorChange }: Props) {
   const { t } = useTranslation('common')
   const selected = DEMO_BRANDS.find((brand) => brand.color === brandColor)?.key ?? 'neutral'
 
   return (
     <div className="flex flex-wrap items-center gap-3 px-4 py-2 tablet:px-6">
-      <Badge icon={FlaskConical}>{t('mode.demo')}</Badge>
       <label className="flex items-center gap-2 text-(length:--type-label-size)">
         <span className="font-medium text-ink-muted">{t('brand.label')}</span>
         <select

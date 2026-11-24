@@ -2,7 +2,9 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Archive } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { DemoBanner } from './DemoBanner'
 import { DemoBar } from './DemoBar'
+import { InstallHint } from './InstallHint'
 import { LanguageSelect } from './LanguageSelect'
 import { MainNav } from './MainNav'
 
@@ -50,7 +52,9 @@ export function AppShell({
         </div>
       </header>
 
+      {demo && <DemoBanner />}
       {demo && <DemoBar brandColor={brandColor} onBrandColorChange={onBrandColorChange} />}
+      <InstallHint />
 
       <div className="flex min-h-0 flex-1 flex-col tablet:flex-row">
         <main className="flex min-w-0 flex-1 flex-col">

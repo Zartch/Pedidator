@@ -2,9 +2,6 @@
   "app": {
     "name": "Pedidator"
   },
-  "mode": {
-    "demo": "MODO DEMO"
-  },
   "nav": {
     "label": "Secciones",
     "day": "Día",
@@ -30,5 +27,20 @@
   },
   "session": {
     "error": "No se pudo abrir la base de datos local."
+  },
+  "demo": {
+    "notice": "MODO DEMO, los datos solo están en este dispositivo",
+    "load": "Cargar datos de ejemplo",
+    "clear": "Borrar datos",
+    "clearTitle": "¿Borrar los datos de la demo?",
+    "clearBody": "Se borran todos los encargos y tickets de este dispositivo. Los clientes se mantienen.",
+    "confirmClear": "Borrar",
+    "cancel": "Cancelar",
+    "error": "No se pudo completar la acción."
+  },
+  "install": {
+    "title": "Instala Pedidator en la pantalla de inicio",
+    "body": "Así funciona sin conexión y se abre como una app. Toca el botón Compartir de Safari y elige «Añadir a pantalla de inicio».",
+    "dismiss": "Ocultar"
   }
 }
