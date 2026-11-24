@@ -32,7 +32,8 @@ jobs:
       - name: Build demo
         env:
           VITE_MODE: demo
-          VITE_BASE: /pedidator/
+          # Pages serves the site under /<repo>/ and the path is case-sensitive.
+          VITE_BASE: /${{ github.event.repository.name }}/
         run: npm run build
 
       # GitHub Pages serves 404.html for unknown paths; the SPA shell answers them.

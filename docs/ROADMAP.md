@@ -300,8 +300,8 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 ### F1-9 · Datos de demo, instalación y GitHub Pages · `haiku`
 - **Lee:** SPEC §4.7, §7 fase 1, §8 "GitHub Pages".
 - **Archivos:** `src/demo/seed.ts`, `src/components/layout/{DemoBanner,InstallHint}.tsx`, `src/main.tsx`, `.github/workflows/pages.yml`, `src/i18n/{ca,es}/common.json`.
-- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (encargos repartidos por el mes actual con **varios para hoy y para mañana**, algunos importantes, algunos con artículos de "preparar el día anterior", pesos por debajo y por encima del kilo, la mayoría sin precio, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/pedidator/` y publica en Pages.
-- **Hecho cuando:** `npm run check` y `VITE_MODE=demo VITE_BASE=/pedidator/ npm run build` pasan.
+- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (encargos repartidos por el mes actual con **varios para hoy y para mañana**, algunos importantes, algunos con artículos de "preparar el día anterior", pesos por debajo y por encima del kilo, la mayoría sin precio, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/Pedidator/` y publica en Pages.
+- **Hecho cuando:** `npm run check` y `VITE_MODE=demo VITE_BASE=/Pedidator/ npm run build` pasan.
 
 ### F1-10 · Pruebas de extremo a extremo de la demo · `sonnet`
 - **Archivos:** `e2e/demo.spec.ts`.
