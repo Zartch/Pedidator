@@ -42,8 +42,7 @@
     "monthDelivered": "Lliurats al mes de {{month}}: {{count}}"
   },
   "next": {
-    "label": "Propera recollida",
-    "at": "a les {{time}}"
+    "label": "Propera recollida"
   },
   "prep": {
     "title": "Preparar avui per a demà",

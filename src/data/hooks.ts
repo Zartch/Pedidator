@@ -180,19 +180,23 @@ export async function queryPrepAheadItems(
 /**
  * Marks for each day of `month` ("YYYY-MM") that has any pickup. Days without
  * orders are absent.
- * - hasOrders: any non-cancelled order.
+ * - hasOrders: any pending order; with `includeArchived`, also delivered ones
+ *   (never cancelled).
  * - important: any pending order flagged important.
  * - prepAhead: any pending order with a `prepDayBefore` item (pickup-day mark).
  */
 export async function queryMonthMarks(
   db: PedidatorDb,
   month: string,
+  options: { includeArchived?: boolean } = {},
 ): Promise<Record<string, DayMarks>> {
   const first = `${month}-01`
   const [y, m] = month.split('-').map(Number)
   const lastDay = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
   const orders = (await ordersBetween(db, first, lastDay)).filter(
-    (o) => o.status !== 'cancelled',
+    (o) =>
+      o.status === 'pending' ||
+      (options.includeArchived === true && o.status === 'delivered'),
   )
   const items = await itemsByOrder(
     db,
@@ -427,8 +431,14 @@ export const useOrderDetail = (id: string | undefined) =>
 export const usePrepAheadItems = (todayMadrid: string) =>
   useDbQuery((db) => queryPrepAheadItems(db, todayMadrid), [todayMadrid])
 
-export const useMonthMarks = (month: string) =>
-  useDbQuery((db) => queryMonthMarks(db, month), [month])
+export const useMonthMarks = (
+  month: string,
+  options?: { includeArchived?: boolean },
+) =>
+  useDbQuery(
+    (db) => queryMonthMarks(db, month, options),
+    [month, options?.includeArchived ?? false],
+  )
 
 export const usePendingTickets = () => useDbQuery(queryPendingTickets, [])
 

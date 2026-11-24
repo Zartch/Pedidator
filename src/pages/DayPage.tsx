@@ -34,12 +34,12 @@ import { cn } from '@/lib/utils'
 
 const SHOW_DELIVERED_KEY = 'pedidator.showDelivered'
 
-/** "Show delivered" is remembered on the device; storage can be blocked, then it defaults to on. */
+/** "Show delivered" is remembered on the device; off by default (the calendar counts only active orders); storage can be blocked, then it stays off. */
 function readShowDelivered(): boolean {
   try {
-    return window.localStorage.getItem(SHOW_DELIVERED_KEY) !== '0'
+    return window.localStorage.getItem(SHOW_DELIVERED_KEY) === '1'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -71,9 +71,10 @@ export default function DayPage() {
   const prepAhead = usePrepAheadItems(day)
   const monthDelivered = useMonthDeliveredCount(month)
   // Marks of the neighbouring months too: the grid and the week show days of both.
-  const before = useMonthMarks(addMonths(month, -1))
-  const current = useMonthMarks(month)
-  const after = useMonthMarks(addMonths(month, 1))
+  const markOptions = { includeArchived: showDelivered }
+  const before = useMonthMarks(addMonths(month, -1), markOptions)
+  const current = useMonthMarks(month, markOptions)
+  const after = useMonthMarks(addMonths(month, 1), markOptions)
   const marks = {
     ...(before ?? EMPTY_MARKS),
     ...(current ?? EMPTY_MARKS),

@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { closeSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import { getOrderItems } from '@/data/repo/orderItems'
-import { createOrder } from '@/data/repo/orders'
+import { createOrder, deliverOrder } from '@/data/repo/orders'
 import { addDays, madridDateTimeToUtcIso, todayMadrid } from '@/lib/dates'
 import DayPage from './DayPage'
 
@@ -145,6 +145,7 @@ describe('DayPage', () => {
       { name: 'Pollastre', done: true },
     ])
     await seedOrder('Jordi', today, '11:00', [{ name: 'Costelles' }])
+    window.localStorage.setItem('pedidator.showDelivered', '1')
     renderDay()
 
     expect(await screen.findByText('1 de 2 encàrrecs preparats')).toBeDefined()
@@ -176,6 +177,7 @@ describe('DayPage', () => {
     const { order } = await seedOrder('Jordi', today, '11:00', [
       { name: 'Costelles' },
     ])
+    window.localStorage.setItem('pedidator.showDelivered', '1')
     renderDay()
     await screen.findAllByText('Jordi')
 
@@ -202,5 +204,61 @@ describe('DayPage', () => {
     ])
     renderDay()
     expect(await screen.findByText('Calia preparar-ho ahir')).toBeDefined()
+  })
+
+  describe('"Mostra els lliurats" switch', () => {
+    const calendarDay = (day: number) =>
+      screen
+        .getAllByRole('button', { name: new RegExp(`\\b${day}\\b`) })
+        .filter(
+          (b) => b.hasAttribute('aria-pressed') && b.hasAttribute('aria-label'),
+        )
+
+    async function seedDeliveredOnly() {
+      const target = addDays(todayMadrid(), 1)
+      const { order } = await seedOrder('Marta', target, '10:00', [
+        { name: 'Pollastre', done: true },
+      ])
+      await deliverOrder(order.id)
+      return Number(target.slice(8))
+    }
+
+    it('a day with only a delivered order has no mark when off, and has it when on', async () => {
+      const n = await seedDeliveredOnly()
+      renderDay()
+      const sw = await screen.findByRole('switch', {
+        name: 'Mostra els lliurats',
+      })
+      expect(sw.getAttribute('aria-checked')).toBe('false')
+      await waitFor(() => expect(calendarDay(n).length).toBeGreaterThan(0))
+      expect(
+        calendarDay(n).every(
+          (b) => !/amb encàrrecs/.test(b.getAttribute('aria-label') ?? ''),
+        ),
+      ).toBe(true)
+
+      fireEvent.click(sw)
+      await waitFor(() =>
+        expect(
+          calendarDay(n).some((b) =>
+            /amb encàrrecs/.test(b.getAttribute('aria-label') ?? ''),
+          ),
+        ).toBe(true),
+      )
+    })
+
+    it('is remembered on the device when the page is mounted again', async () => {
+      renderDay()
+      fireEvent.click(
+        await screen.findByRole('switch', { name: 'Mostra els lliurats' }),
+      )
+      expect(window.localStorage.getItem('pedidator.showDelivered')).toBe('1')
+      cleanup()
+      renderDay()
+      const sw = await screen.findByRole('switch', {
+        name: 'Mostra els lliurats',
+      })
+      expect(sw.getAttribute('aria-checked')).toBe('true')
+    })
   })
 })

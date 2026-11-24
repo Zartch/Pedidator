@@ -42,8 +42,7 @@
     "monthDelivered": "Entregados en {{month}}: {{count}}"
   },
   "next": {
-    "label": "Próxima recogida",
-    "at": "a las {{time}}"
+    "label": "Próxima recogida"
   },
   "prep": {
     "title": "Preparar hoy para mañana",

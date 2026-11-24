@@ -118,6 +118,51 @@ describe('month marks', () => {
   })
 })
 
+describe('month marks and archived orders', () => {
+  async function seed() {
+    const c = await getOrCreateCustomerByName('Ana')
+    const pending = await createOrder(
+      { customer: c.id, pickupAt: '2026-12-10T10:00:00.000Z' },
+      [{ name: 'A', measure: 'unit' }],
+    )
+    const delivered = await createOrder(
+      {
+        customer: c.id,
+        pickupAt: '2026-12-11T10:00:00.000Z',
+        important: true,
+      },
+      [{ name: 'B', measure: 'unit', prepDayBefore: true }],
+    )
+    await deliverOrder(delivered.order.id)
+    const cancelled = await createOrder(
+      { customer: c.id, pickupAt: '2026-12-12T10:00:00.000Z' },
+      [{ name: 'C', measure: 'unit' }],
+    )
+    await cancelOrder(cancelled.order.id)
+    return { pending }
+  }
+
+  it('by default only pending orders are marked', async () => {
+    await seed()
+    const marks = await queryMonthMarks(db(), '2026-12')
+    expect(Object.keys(marks)).toEqual(['2026-12-10'])
+    expect(marks['2026-12-10'].hasOrders).toBe(true)
+  })
+
+  it('includeArchived adds delivered orders to hasOrders only', async () => {
+    await seed()
+    const marks = await queryMonthMarks(db(), '2026-12', {
+      includeArchived: true,
+    })
+    expect(Object.keys(marks).sort()).toEqual(['2026-12-10', '2026-12-11'])
+    expect(marks['2026-12-11']).toEqual({
+      hasOrders: true,
+      important: false,
+      prepAhead: false,
+    })
+  })
+})
+
 describe('tickets', () => {
   it('groups unpaid tickets by customer with totals', async () => {
     const a = await getOrCreateCustomerByName('Zoe')
