@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Ban } from 'lucide-react'
 import { madridDay } from '@shared/progress'
 import type { OrderItem } from '@shared/types'
@@ -29,28 +29,57 @@ const INPUT =
 const LABEL = 'text-(length:--type-label-size) font-medium'
 const ERROR = 'text-(length:--type-caption-size) leading-(--type-caption-line) text-danger'
 
-type FormError = 'customer' | 'none' | 'weight' | 'price' | 'save'
+type FormError = 'customer' | 'datetime' | 'itemName' | 'none' | 'weight' | 'price' | 'save'
 
 /** Create (`/orders/new?date=`) or edit (`/orders/:id`) an order with its items. */
 export default function OrderFormPage() {
   const { t } = useTranslation('orderForm')
   const { id } = useParams()
   const [search] = useSearchParams()
+  // undefined = loading, null = not found. useLiveQuery keeps the previous result
+  // while the id changes, so a result for another order counts as loading.
   const detail = useOrderDetail(id)
-  const [slow, setSlow] = useState(false)
 
-  useEffect(() => {
-    if (!id) return
-    const timer = setTimeout(() => setSlow(true), 1500)
-    return () => clearTimeout(timer)
-  }, [id])
-
-  if (id && !detail) {
-    return <p className="text-ink-muted">{slow ? t('notFound') : t('loading')}</p>
+  if (id) {
+    if (detail === null) {
+      return (
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-ink-muted">{t('notFound')}</p>
+          <Link to="/" className="font-semibold text-brand-strong">
+            {t('backToDay')}
+          </Link>
+        </div>
+      )
+    }
+    if (detail === undefined || detail.order.id !== id) {
+      return <p className="text-ink-muted">{t('loading')}</p>
+    }
   }
   const requested = search.get('date')
   const day = requested && isDay(requested) ? requested : todayMadrid()
-  return <OrderForm key={id ?? 'new'} detail={detail} initialDay={day} />
+  return (
+    <OrderForm
+      key={detail?.order.id ?? 'new'}
+      detail={id ? (detail ?? undefined) : undefined}
+      initialDay={day}
+    />
+  )
+}
+
+/** A row nobody touched: no id (not stored yet) and nothing typed or switched on. */
+function isBlankDraft(d: ItemDraft): boolean {
+  const empty = emptyDraft()
+  return (
+    !d.id &&
+    d.name.trim() === '' &&
+    d.notes.trim() === '' &&
+    d.weightText.trim() === '' &&
+    d.priceText.trim() === '' &&
+    d.realText.trim() === '' &&
+    d.quantity === empty.quantity &&
+    !d.prepDayBefore &&
+    !d.done
+  )
 }
 
 function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: string }) {
@@ -69,10 +98,14 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
   const [saving, setSaving] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
 
-  const back = (target: string) => navigate(`/day/${target}`)
+  const back = (target: string) =>
+    navigate(`/day/${isDay(target) ? target : todayMadrid()}`)
 
   async function save() {
-    const named = drafts.filter((d) => d.name.trim() !== '')
+    // Untouched new rows are ignored; anything else without a name is an error.
+    const used = drafts.filter((d) => !isBlankDraft(d))
+    const unnamed = used.some((d) => d.name.trim() === '')
+    const named = used.filter((d) => d.name.trim() !== '')
     const converted = named.map(draftToInput)
     let failed: 'weight' | 'price' | null = null
     for (const r of converted) {
@@ -83,9 +116,13 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
     }
     const next: FormError | null = !nameKey(customerText)
       ? 'customer'
-      : failed ?? (named.length === 0 ? 'none' : null)
+      : !isDay(day) || !time
+        ? 'datetime'
+        : unnamed
+          ? 'itemName'
+          : failed ?? (named.length === 0 ? 'none' : null)
     setError(next)
-    if (next || !day || !time) return
+    if (next) return
     const items = converted.flatMap((r) => (r.ok ? [r.item] : []))
     setSaving(true)
     try {
@@ -126,6 +163,8 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
 
   const errorText: Record<FormError, string> = {
     customer: t('customer.error'),
+    datetime: t('dateTimeError'),
+    itemName: t('items.errorName'),
     none: t('items.errorNone'),
     weight: t('items.errorWeight'),
     price: t('items.errorPrice'),
@@ -162,6 +201,7 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
                 type="date"
                 className={INPUT}
                 value={day}
+                aria-invalid={error === 'datetime' && !isDay(day) ? true : undefined}
                 onChange={(e) => setDay(e.target.value)}
               />
             </div>
@@ -174,6 +214,7 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
                 type="time"
                 className={`${INPUT} tabular-nums`}
                 value={time}
+                aria-invalid={error === 'datetime' && !time ? true : undefined}
                 onChange={(e) => setTime(e.target.value)}
               />
             </div>

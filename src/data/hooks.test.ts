@@ -8,6 +8,7 @@ import {
   queryCustomerOrders,
   queryDayOrders,
   queryMonthMarks,
+  queryOrderDetail,
   queryPendingTickets,
   queryPrepAheadItems,
   querySuggestCustomers,
@@ -287,7 +288,14 @@ describe('archive and counts', () => {
   it('customer and customer tickets (paid and pending, newest first)', async () => {
     const a = await getOrCreateCustomerByName('Ana')
     expect((await queryCustomer(db(), a.id))?.name).toBe('Ana')
-    expect(await queryCustomer(db(), 'nope')).toBeUndefined()
+    expect(await queryCustomer(db(), 'nope')).toBeNull()
+    const gone = await getOrCreateCustomerByName('Gone')
+    await db().customers.update(gone.id, { deleted: true })
+    expect(await queryCustomer(db(), gone.id)).toBeNull()
+    await db().customers.update(a.id, { mergedInto: 'other' })
+    expect(await queryCustomer(db(), a.id)).toBeNull()
+    await db().customers.update(a.id, { mergedInto: '' })
+    expect(await queryOrderDetail(db(), 'nope')).toBeNull()
     const t1 = await createTicket({ customer: a.id, amountCents: 1 })
     await new Promise((r) => setTimeout(r, 5))
     const t2 = await createTicket({ customer: a.id, amountCents: 2 })

@@ -38,11 +38,21 @@ export function AppDialog({ open, title, onClose, children, footer }: Props) {
     event.preventDefault()
   }
 
+  // Chrome closes the native dialog on a second Escape even after preventDefault:
+  // reopen it while the parent still says it is open.
+  function reopenIfStillOpen() {
+    const dialog = ref.current
+    if (open && dialog && !dialog.open && typeof dialog.showModal === 'function') {
+      dialog.showModal()
+    }
+  }
+
   return (
     <dialog
       ref={ref}
       aria-labelledby={titleId}
       onCancel={keepOpen}
+      onClose={reopenIfStillOpen}
       className="m-auto max-h-[calc(100svh-2rem)] w-[min(calc(100vw-2rem),36rem)] max-w-none flex-col overflow-hidden rounded-lg border border-line bg-surface-raised p-0 text-ink shadow-overlay backdrop:bg-ink/40 open:flex"
     >
       <div className="flex min-h-14 items-center gap-3 border-b border-line px-5">

@@ -6,6 +6,7 @@
   "noMatches": "Ningún cliente coincide con la búsqueda.",
   "loading": "Cargando…",
   "back": "Volver a clientes",
+  "notFound": "Cliente no encontrado",
   "customerTitle": "Ficha del cliente",
   "phone": "Teléfono",
   "notes": "Notas",

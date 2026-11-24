@@ -1,8 +1,10 @@
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { ChevronDown, ChevronUp, PackageCheck } from 'lucide-react'
+import { ChevronDown, ChevronUp, PackageCheck, Undo2 } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import { reopenOrder } from '@/data/repo/orders'
 import type { DayOrder } from '@/data/hooks'
 import { utcIsoToMadridTime } from '@/lib/dates'
 
@@ -29,7 +31,7 @@ export function DeliveredGroup({ orders }: { orders: DayOrder[] }) {
       {open && (
         <ul id={panelId} className="flex flex-col gap-2">
           {orders.map(({ order, customer }) => (
-            <li key={order.id}>
+            <li key={order.id} className="flex flex-col gap-2">
               <Link
                 to={`/orders/${order.id}`}
                 className="grid min-h-[72px] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 rounded-md border border-line bg-surface-sunken px-4 py-3 text-ink-muted"
@@ -44,6 +46,13 @@ export function DeliveredGroup({ orders }: { orders: DayOrder[] }) {
                   {t('card.delivered')}
                 </Badge>
               </Link>
+              <Button
+                className="self-end"
+                onClick={() => void reopenOrder(order.id)}
+              >
+                <Undo2 className="size-5" aria-hidden="true" />
+                {t('deliveredGroup.reopen')}
+              </Button>
             </li>
           ))}
         </ul>

@@ -6,6 +6,7 @@
   "noMatches": "Cap client coincideix amb la cerca.",
   "loading": "Carregant…",
   "back": "Tornar a clients",
+  "notFound": "Client no trobat",
   "customerTitle": "Fitxa del client",
   "phone": "Telèfon",
   "notes": "Notes",

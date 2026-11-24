@@ -126,13 +126,13 @@ export async function queryDayOrders(
   }))
 }
 
-/** One order with customer and items (undefined if missing or deleted). */
+/** One order with customer and items (null if missing or deleted). */
 export async function queryOrderDetail(
   db: PedidatorDb,
   id: string,
-): Promise<DayOrder | undefined> {
+): Promise<DayOrder | null> {
   const order = await db.orders.get(id)
-  if (!order || order.deleted) return undefined
+  if (!order || order.deleted) return null
   const [items, customers] = await Promise.all([
     itemsByOrder(db, [id]),
     customersById(db, [order.customer]),
@@ -379,11 +379,13 @@ export async function queryMonthDeliveredCount(
   return orders.filter((o) => o.status === 'delivered').length
 }
 
+/** One live customer; null if missing, deleted or merged into another. */
 export async function queryCustomer(
   db: PedidatorDb,
   id: string,
-): Promise<Customer | undefined> {
-  return db.customers.get(id)
+): Promise<Customer | null> {
+  const customer = await db.customers.get(id)
+  return !customer || customer.deleted || customer.mergedInto ? null : customer
 }
 
 /** Live tickets of a customer, paid and unpaid, newest first. */
@@ -422,9 +424,10 @@ function useDbQuery<T>(
 export const useDayOrders = (day: string) =>
   useDbQuery((db) => queryDayOrders(db, day), [day])
 
+/** undefined = loading, null = not found. */
 export const useOrderDetail = (id: string | undefined) =>
   useDbQuery(
-    (db) => (id ? queryOrderDetail(db, id) : Promise.resolve(undefined)),
+    (db) => (id ? queryOrderDetail(db, id) : Promise.resolve(null)),
     [id],
   )
 
@@ -462,9 +465,10 @@ export const useArchivedOrders = (filter: ArchiveFilter) =>
 export const useMonthDeliveredCount = (month: string) =>
   useDbQuery((db) => queryMonthDeliveredCount(db, month), [month])
 
+/** undefined = loading, null = not found. */
 export const useCustomer = (id: string | undefined) =>
   useDbQuery(
-    (db) => (id ? queryCustomer(db, id) : Promise.resolve(undefined)),
+    (db) => (id ? queryCustomer(db, id) : Promise.resolve(null)),
     [id],
   )
 

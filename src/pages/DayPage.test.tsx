@@ -145,7 +145,6 @@ describe('DayPage', () => {
       { name: 'Pollastre', done: true },
     ])
     await seedOrder('Jordi', today, '11:00', [{ name: 'Costelles' }])
-    window.localStorage.setItem('pedidator.showDelivered', '1')
     renderDay()
 
     expect(await screen.findByText('1 de 2 encàrrecs preparats')).toBeDefined()
@@ -172,12 +171,35 @@ describe('DayPage', () => {
     expect(screen.getByText('Lliurat')).toBeDefined()
   })
 
+  it('"Torna a pendent" brings a delivered order back with its items as they were', async () => {
+    const today = todayMadrid()
+    await seedOrder('Marta', today, '10:00', [
+      { name: 'Pollastre', done: true },
+      { name: 'Botifarra' },
+    ])
+    renderDay()
+    await screen.findAllByText('Marta')
+    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Lliurar igualment' }))
+    const group = await screen.findByRole('button', { name: 'Lliurats (1)' })
+    fireEvent.click(group)
+    fireEvent.click(screen.getByRole('button', { name: 'Torna a pendent' }))
+
+    await waitFor(() =>
+      expect(within(card('Marta')).getByText('Per preparar · 1/2')).toBeDefined(),
+    )
+    expect(screen.queryByRole('button', { name: 'Lliurats (1)' })).toBeNull()
+    const pollastre = within(card('Marta')).getByRole('checkbox', { name: /Pollastre/ })
+    expect(pollastre.getAttribute('aria-checked')).toBe('true')
+    const botifarra = within(card('Marta')).getByRole('checkbox', { name: /Botifarra/ })
+    expect(botifarra.getAttribute('aria-checked')).toBe('false')
+  })
+
   it('asks for confirmation before delivering an order that is not fully prepared', async () => {
     const today = todayMadrid()
     const { order } = await seedOrder('Jordi', today, '11:00', [
       { name: 'Costelles' },
     ])
-    window.localStorage.setItem('pedidator.showDelivered', '1')
     renderDay()
     await screen.findAllByText('Jordi')
 

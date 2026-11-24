@@ -126,9 +126,7 @@ test('lliurar un encàrrec el plega a "Lliurats"', async ({ page }) => {
   await expect(card).toHaveCount(0)
   await expect(page.getByText('1 lliurat', { exact: true })).toBeVisible()
 
-  // The group appears only after switching on "Mostra els lliurats".
-  await expect(page.getByRole('button', { name: /^Lliurats \(1\)/ })).toHaveCount(0)
-  await page.getByRole('switch', { name: 'Mostra els lliurats' }).click()
+  // The delivered group is always there, folded.
   const group = page.getByRole('button', { name: 'Lliurats (1)' })
   await expect(group).toBeVisible()
   await expect(group).toHaveAttribute('aria-expanded', 'false')

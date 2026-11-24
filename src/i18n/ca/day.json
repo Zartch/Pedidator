@@ -75,6 +75,7 @@
     "cancel": "Cancel·la"
   },
   "deliveredGroup": {
-    "title": "Lliurats ({{count}})"
+    "title": "Lliurats ({{count}})",
+    "reopen": "Torna a pendent"
   }
 }

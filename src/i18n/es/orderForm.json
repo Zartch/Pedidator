@@ -4,6 +4,8 @@
   "titleEdit": "Editar encargo",
   "loading": "Cargando…",
   "notFound": "No se ha encontrado el encargo",
+  "backToDay": "Volver a hoy",
+  "dateTimeError": "Indica el día y la hora de recogida",
   "whoWhen": "Quién y cuándo",
   "customer": {
     "label": "Cliente",
@@ -22,6 +24,7 @@
   "items": {
     "title": "Artículos",
     "add": "Añadir otro artículo",
+    "errorName": "El artículo necesita un nombre",
     "errorNone": "Añade al menos un artículo",
     "errorWeight": "Revisa el peso de algún artículo",
     "errorPrice": "Revisa el precio de algún artículo"

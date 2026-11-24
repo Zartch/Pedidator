@@ -60,3 +60,14 @@ describe('CustomerPage contact fields', () => {
     })
   })
 })
+
+describe('CustomerPage not found', () => {
+  it('shows "Client no trobat" with a link to the list for an unknown customer', async () => {
+    customerId = 'nope'
+    renderPage()
+    expect(await screen.findByText('Client no trobat')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Tornar a clients' }).getAttribute('href')).toBe(
+      '/customers',
+    )
+  })
+})

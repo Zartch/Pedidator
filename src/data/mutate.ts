@@ -50,7 +50,7 @@ function serverPatch(fields: Record<string, unknown>): Record<string, unknown> {
   )
 }
 
-function writeTables(db: PedidatorDb) {
+export function writeTables(db: PedidatorDb) {
   return [db.customers, db.orders, db.order_items, db.tickets, db.outbox]
 }
 

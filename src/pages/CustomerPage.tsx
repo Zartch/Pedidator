@@ -38,9 +38,19 @@ export default function CustomerPage() {
   const tickets = useCustomerTickets(id)
   const locale: Locale = i18n.language === 'es' ? 'es' : 'ca'
 
-  // useCustomer is undefined both while loading and for an unknown id.
-  if (!customer) {
+  // undefined = loading; null = unknown, deleted or merged customer.
+  if (customer === undefined || (customer && customer.id !== id)) {
     return <p className="text-ink-muted">{t('loading')}</p>
+  }
+  if (customer === null) {
+    return (
+      <section className="flex flex-col items-start gap-3">
+        <p className="text-ink-muted">{t('notFound')}</p>
+        <Link to="/customers" className="font-semibold text-brand-strong">
+          {t('back')}
+        </Link>
+      </section>
+    )
   }
 
   return (

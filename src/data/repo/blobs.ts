@@ -43,8 +43,15 @@ export async function deleteBlob(
   await db.blobs.delete(blobId(collection, recordId, kind))
 }
 
-/** Photos waiting to be uploaded. */
+/** Photos waiting to be uploaded; photos of deleted (or missing) tickets are skipped. */
 export async function listPendingPhotos(): Promise<BlobRecord[]> {
   const { db } = requireSession()
-  return db.blobs.filter((b) => b.kind === 'photo').toArray()
+  const photos = await db.blobs.filter((b) => b.kind === 'photo').toArray()
+  const live = new Set<string>()
+  for (const b of photos) {
+    if (b.collection !== 'tickets') continue
+    const ticket = await db.tickets.get(b.recordId)
+    if (ticket && !ticket.deleted) live.add(b.recordId)
+  }
+  return photos.filter((b) => b.collection !== 'tickets' || live.has(b.recordId))
 }

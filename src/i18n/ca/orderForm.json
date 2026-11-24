@@ -4,6 +4,8 @@
   "titleEdit": "Edita l'encàrrec",
   "loading": "Carregant…",
   "notFound": "No s'ha trobat l'encàrrec",
+  "backToDay": "Torna a avui",
+  "dateTimeError": "Indica el dia i l'hora de recollida",
   "whoWhen": "Qui i quan",
   "customer": {
     "label": "Client",
@@ -22,6 +24,7 @@
   "items": {
     "title": "Articles",
     "add": "Afegeix un altre article",
+    "errorName": "L'article necessita un nom",
     "errorNone": "Afegeix com a mínim un article",
     "errorWeight": "Revisa el pes d'algun article",
     "errorPrice": "Revisa el preu d'algun article"

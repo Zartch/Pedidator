@@ -5,8 +5,7 @@ import { parseMoney } from '@shared/format'
 import { nameKey } from '@shared/nameKey'
 import { useCustomerSuggestions } from '@/data/hooks'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
-import { putBlob } from '@/data/repo/blobs'
-import { createTicket } from '@/data/repo/tickets'
+import { createTicket, createTicketWithPhoto } from '@/data/repo/tickets'
 import { preparePhoto } from '@/lib/photo'
 import { AppDialog } from '@/components/ui/AppDialog'
 import { Button } from '@/components/ui/Button'
@@ -68,11 +67,10 @@ export function TicketDialog({ onClose }: Props) {
     try {
       const prepared = photo ? await preparePhoto(photo.file) : null
       const customer = await getOrCreateCustomerByName(customerText)
-      const ticket = await createTicket({ customer: customer.id, amountCents: cents, notes })
-      if (prepared) {
-        await putBlob('tickets', ticket.id, 'photo', prepared.photo)
-        await putBlob('tickets', ticket.id, 'thumb', prepared.thumb)
-      }
+      const fields = { customer: customer.id, amountCents: cents, notes }
+      // One transaction: if the photo cannot be stored, no ticket is left to duplicate on retry.
+      if (prepared) await createTicketWithPhoto(fields, prepared)
+      else await createTicket(fields)
       onClose()
     } catch {
       setErrors({ save: true })

@@ -11,7 +11,8 @@ async function shrink(file: File, maxPx: number): Promise<Blob> {
     maxWidthOrHeight: maxPx,
     initialQuality: PHOTO_QUALITY,
     fileType: 'image/jpeg',
-    useWebWorker: true,
+    // The worker is fetched from a CDN that the offline-first app does not precache.
+    useWebWorker: false,
   })
 }
 

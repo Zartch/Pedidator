@@ -75,6 +75,7 @@
     "cancel": "Cancelar"
   },
   "deliveredGroup": {
-    "title": "Entregados ({{count}})"
+    "title": "Entregados ({{count}})",
+    "reopen": "Volver a pendiente"
   }
 }

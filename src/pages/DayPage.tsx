@@ -180,7 +180,7 @@ export default function DayPage() {
             />
             {t('calendar.showDelivered')}
           </button>
-          {showDelivered && <DeliveredGroup orders={delivered} />}
+          <DeliveredGroup orders={delivered} />
         </div>
       </section>
     </div>

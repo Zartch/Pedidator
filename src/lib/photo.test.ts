@@ -21,7 +21,9 @@ describe('preparePhoto', () => {
       maxWidthOrHeight: 1600,
       initialQuality: 0.7,
       fileType: 'image/jpeg',
+      // Offline-first: the library's CDN-hosted worker is not precached.
+      useWebWorker: false,
     })
-    expect(compress.mock.calls[1][1]).toMatchObject({ maxWidthOrHeight: 300 })
+    expect(compress.mock.calls[1][1]).toMatchObject({ maxWidthOrHeight: 300, useWebWorker: false })
   })
 })

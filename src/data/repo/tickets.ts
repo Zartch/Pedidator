@@ -1,5 +1,6 @@
 import type { Ticket } from '@shared/types'
-import { create, update, softDelete } from '../mutate'
+import { create, update, softDelete, writeTables } from '../mutate'
+import { deleteBlob, putBlob } from './blobs'
 import { requireSession } from '../session'
 
 export type TicketFields = {
@@ -55,7 +56,29 @@ export function markTicketUnpaid(id: string): Promise<Ticket> {
   return update(db, ctx, 'tickets', id, { paid: false, paidAt: '' })
 }
 
+/**
+ * Creates a ticket and stores its photo and thumbnail in one transaction
+ * (blobs are local only): if saving the photo fails, no ticket is left behind.
+ */
+export function createTicketWithPhoto(
+  fields: TicketFields,
+  images: { photo: Blob; thumb: Blob },
+): Promise<Ticket> {
+  const { db } = requireSession()
+  return db.transaction('rw', [...writeTables(db), db.blobs], async () => {
+    const ticket = await createTicket(fields)
+    await putBlob('tickets', ticket.id, 'photo', images.photo)
+    await putBlob('tickets', ticket.id, 'thumb', images.thumb)
+    return ticket
+  })
+}
+
+/** Soft-deletes the ticket and drops its local photo blobs. */
 export async function deleteTicket(id: string): Promise<void> {
   const { db, ctx } = requireSession()
-  await softDelete(db, ctx, 'tickets', id)
+  await db.transaction('rw', [...writeTables(db), db.blobs], async () => {
+    await softDelete(db, ctx, 'tickets', id)
+    await deleteBlob('tickets', id, 'photo')
+    await deleteBlob('tickets', id, 'thumb')
+  })
 }
