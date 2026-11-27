@@ -9,6 +9,7 @@ import type {
   Customer,
   Order,
   OrderItem,
+  Product,
   Ticket,
 } from '@shared/types'
 import { newId } from '@/lib/id'
@@ -17,6 +18,7 @@ import type { SessionContext } from './session'
 
 export type RecordOf = {
   customers: Customer
+  products: Product
   orders: Order
   order_items: OrderItem
   tickets: Ticket

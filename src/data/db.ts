@@ -1,5 +1,11 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { Customer, Order, OrderItem, Ticket } from '@shared/types'
+import type {
+  Customer,
+  Order,
+  OrderItem,
+  Product,
+  Ticket,
+} from '@shared/types'
 
 /**
  * Pending local change (SPEC 4.2). Defined here until F2-3 moves it to
@@ -49,6 +55,7 @@ export type MetaRecord = { key: string; value: unknown }
 
 export type PedidatorDb = Dexie & {
   customers: EntityTable<Customer, 'id'>
+  products: EntityTable<Product, 'id'>
   orders: EntityTable<Order, 'id'>
   order_items: EntityTable<OrderItem, 'id'>
   tickets: EntityTable<Ticket, 'id'>
@@ -75,5 +82,6 @@ export function openCompanyDb(companyId: string): PedidatorDb {
     blobs: 'id, [collection+recordId]',
     meta: 'key',
   })
+  db.version(2).stores({ products: 'id, nameKey' })
   return db
 }

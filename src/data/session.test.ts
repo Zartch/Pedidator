@@ -55,6 +55,7 @@ describe('session', () => {
       'order_items',
       'orders',
       'outbox',
+      'products',
       'tickets',
     ])
   })

@@ -51,4 +51,19 @@ export type Ticket = Base & {
   paidAt?: string
 }
 
-export type CollectionName = 'customers' | 'orders' | 'order_items' | 'tickets'
+/** Company catalogue entry. Order items copy its values; they keep no link to it. */
+export type Product = Base & {
+  name: string
+  nameKey: string
+  measure: Measure
+  prepDayBefore: boolean
+  unitPriceCents?: number | null
+  notes?: string
+}
+
+export type CollectionName =
+  | 'customers'
+  | 'products'
+  | 'orders'
+  | 'order_items'
+  | 'tickets'

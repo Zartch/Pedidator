@@ -46,7 +46,7 @@ La versión anterior (hecha con herramientas de Google) no se reutiliza. Se empi
 
 ### Fuera del alcance de la prueba de concepto
 - App nativa en App Store o Play Store (será una PWA).
-- Facturación, TPV y stock. Catálogo de productos con precios fijos (posible fase futura; de momento el nombre y el precio del artículo se escriben a mano, con sugerencias de lo usado antes).
+- Facturación, TPV y stock. Precios fijos o tarifas: el catálogo de productos (ver `products`) solo guarda nombre, cómo se pide, "preparar el día anterior" y un precio opcional que se propone; el artículo del encargo siempre se puede cambiar a mano.
 - Alta de empresas por su cuenta (las crea el administrador de la plataforma).
 - Notificaciones push.
 - Sincronización en segundo plano con la app cerrada (Safari no lo permite).
@@ -155,6 +155,22 @@ No hay registro público. Los superusuarios propios de PocketBase (`_superusers`
 
 > El índice único no puede impedir que se creen duplicados sin conexión. Si al subir choca con el índice, el servidor **no da error**: devuelve el cliente existente y el dispositivo reasigna sus pedidos y tickets a ese cliente (ver 4.3).
 
+### `products` (catálogo de la empresa)
+| Campo | Tipo | Notas |
+|---|---|---|
+| `name` | texto, obligatorio | Por ejemplo, "Entrecot de ternera". |
+| `nameKey` | texto, índice único por (`company`, `nameKey`) entre los no borrados | Igual que en `customers`. |
+| `measure` | `unit` \| `weight` | Cómo se pide normalmente. |
+| `prepDayBefore` | booleano | Se propone al artículo. |
+| `unitPriceCents` | entero, opcional | Precio por unidad o por kilo, IVA incluido. Se propone en el desplegable "Precio" del artículo. |
+| `notes` | texto, opcional | Notas internas del producto (no se copian al artículo). |
+
+- El artículo del encargo **copia** los valores del producto al elegirlo (`name`, `measure`, `prepDayBefore` y, si tiene, `unitPriceCents`); no guarda ninguna relación con el producto. Cambiar o borrar un producto **no cambia** los encargos ya hechos.
+- Las sugerencias de nombre del artículo salen **solo del catálogo** (productos no borrados).
+- Al guardar un encargo, cada artículo cuyo `nameKey` no esté en el catálogo **crea el producto** con su `name`, `measure` y `prepDayBefore` (sin precio). Así el catálogo se llena solo y se corrige desde la pantalla Productos.
+- Borrar un producto = `deleted: true`: desaparece de las sugerencias. Si se vuelve a escribir ese nombre en un encargo, se crea de nuevo.
+- Duplicados sin conexión: igual que en `customers` (ver 4.3), pero sin alias, porque ningún registro apunta a un producto.
+
 ### `orders`
 | Campo | Tipo | Notas |
 |---|---|---|
@@ -175,7 +191,7 @@ Sustituyen a las "tareas" de la versión 1: cada artículo se prepara y se marca
 | Campo | Tipo | Notas |
 |---|---|---|
 | `order` | relación con `orders` | |
-| `name` | texto | Por ejemplo, "Entrecot de ternera". Con sugerencias de los nombres ya usados en la empresa. |
+| `name` | texto | Por ejemplo, "Entrecot de ternera". Con sugerencias del catálogo (`products`). |
 | `measure` | `unit` \| `weight` | Cómo se pide: por unidades o por peso. |
 | `quantity` | entero ≥ 1, por defecto 1 | Solo `unit`: número de unidades. |
 | `orderedGrams` | entero, opcional | Solo `weight`: peso pedido, **siempre en gramos**. Se puede dejar vacío ("un trozo de…"). |
@@ -203,7 +219,7 @@ Un artículo válido solo necesita `name`. En la interfaz un pedido se guarda co
 - El **día de recogida** se marca en el calendario con un color propio (distinto del de "importante"; pueden coincidir los dos).
 - En el espacio de trabajo de la víspera, el artículo aparece en la sección **"Preparar hoy para mañana"**, con el cliente y la hora de recogida. Marcarlo ahí marca el artículo (`done`): es el mismo artículo, no una tarea aparte.
 - El día de recogida, si el artículo sigue sin marcar, se muestra con el aviso _"Había que prepararlo ayer"_.
-- Las sugerencias de nombre recuerdan la última vez: al elegir un nombre ya usado se propone su `measure` y su `prepDayBefore`.
+- Las sugerencias de nombre salen del catálogo: al elegir un producto se proponen su `measure`, su `prepDayBefore` y, si tiene, su precio.
 
 **Precio** (opcional; una sola función compartida, con pruebas):
 - El formulario del artículo enseña nombre, cantidad, notas y "preparar el día anterior". Precio y peso real están en un desplegable **"Precio"**, cerrado por defecto.
@@ -298,7 +314,7 @@ Endpoint propio en `pb_hooks`: `POST /api/sync/push`, con las operaciones por or
 | Usuario con `active = false` | **Rechazo** `403` de toda la petición. |
 | Colección o campo que no está en la lista de permitidos (`shared/sync/schema.ts`) | **Rechazo** de la operación (`invalid`). Nunca se aplica. |
 | `create` | Inserta con el `id` del cliente, `version=1` y `updatedBy=auth`. Si el id ya existe en la misma empresa con el mismo contenido → OK. Si existe con otro contenido o en otra empresa → rechazo `id_taken` **sin devolver ningún dato** del registro existente. |
-| `create` de `customers` que choca con el `nameKey` de un cliente existente | OK con `{ mergedInto: idExistente }` y alta en `customer_aliases`. El dispositivo reasigna sus registros locales **y las operaciones pendientes de su outbox** a ese id y descarta el cliente duplicado. |
+| `create` de `customers` o de `products` que choca con el `nameKey` de un registro existente no borrado | OK con `{ mergedInto: idExistente }` y, solo en `customers`, alta en `customer_aliases`. El dispositivo reasigna sus registros locales **y las operaciones pendientes de su outbox** a ese id y descarta el cliente duplicado. |
 | `update`, `version` del servidor == `baseVersion` | Aplica el patch, `version++` → **OK**. |
 | `update`, versión distinta, pero **para cada campo del patch** el valor del servidor == `baseValues[campo]` | Nadie tocó esos campos: **fusión automática**, aplica el patch, `version++` → **OK (fusionado)**. |
 | `update`, versión distinta y algún campo en común con valor diferente | **CONFLICTO**: devuelve el registro actual, `updatedBy` (con nombre), `updated` y los campos en conflicto. No aplica nada. |
@@ -365,7 +381,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 3. **Formulario de encargo** (crear y editar)
    - Cliente: campo con sugerencias (búsqueda por `nameKey`). Si no existe → "Crear cliente «X»".
    - Fecha y hora de recogida, importante, notas. Cancelar el encargo es una acción aparte, con confirmación.
-   - **Artículos**: nombre (con sugerencias), unidades o peso, cantidad, notas, **"preparar el día anterior"** y preparado. Se pueden añadir, reordenar y borrar. Añadir un artículo tiene que ser rápido: nombre, cantidad y siguiente.
+   - **Artículos**: nombre (con sugerencias del catálogo de productos), unidades o peso, cantidad, notas, **"preparar el día anterior"** y preparado. Se pueden añadir, reordenar y borrar. Añadir un artículo tiene que ser rápido: nombre, cantidad y siguiente.
    - Peso con selector g / kg y conversión automática (ver `order_items`).
    - Desplegable "Precio" por artículo (precio y peso real), cerrado por defecto. Si algún artículo tiene precio, total al pie con "≈" si es estimado.
    - **Botón "Historial"**: lista cronológica de cambios del pedido y sus artículos (_"Marta · 12/12 10:41 · Hora de recogida: 10:00 → 11:30"_). Las sobrescrituras se marcan (_"sobrescribió cambios de Jordi"_). Solo con conexión; sin conexión: _"El historial necesita conexión"_.
@@ -380,6 +396,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 6. **Conflictos** (ver 4.4).
 7. **Ajustes de la empresa** (`company_admin` y `platform_admin`): nombre, idioma, **color de la empresa** (con vista previa), destinatarios y hora del correo, usuarios (alta, rol, baja). Botones de "Enviar resumen ahora" y "Exportar JSON".
 8. **Administración de la plataforma** (`platform_admin`): lista de empresas, crear empresa y su primer administrador, y **cambiar de empresa** (cambia la base de datos local). El nombre de la empresa activa se ve siempre en la cabecera.
+9. **Productos** (en el menú, junto a Día, Tickets y Clientes): lista con búsqueda por `nameKey` (nombre, unidades o peso, marca de "preparar el día anterior"); crear, editar (nombre, unidades o peso, "preparar el día anterior", precio opcional dentro del desplegable "Precio", notas) y borrar con confirmación. Sin importes en la lista.
 
 ---
 
@@ -416,6 +433,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 ### Fase 1: Demo solo local (GitHub Pages)
 - Pantallas 2 a 5 de la sección 5 funcionando contra Dexie, sin servidor. Una sola empresa de demostración, sin login.
 - Espacio de trabajo del día con progreso, artículos en unidades o peso (g / kg), "preparar el día anterior", precio opcional. Archivado y "Mostrar entregados".
+- Catálogo de productos consultable y editable (pantalla 9), que alimenta las sugerencias del formulario.
 - Color de empresa seleccionable en la demo.
 - Selector de idioma ca/es.
 - `VITE_MODE=demo`: datos de ejemplo cargables y aviso "MODO DEMO, los datos solo están en este dispositivo".
@@ -529,5 +547,5 @@ Las instrucciones para Claude Code están en [`CLAUDE.md`](../CLAUDE.md), en la 
 
 ### Preguntas abiertas
 1. ¿El pedido necesita marcar si está **pagado**, o eso se gestiona con los tickets?
-2. ¿Hace falta un **catálogo de productos** con precio por empresa a corto plazo?
+2. ~~¿Hace falta un **catálogo de productos** con precio por empresa a corto plazo?~~ **Sí** (27/11/2026, durante la puerta G1): catálogo sencillo con precio opcional que se propone al artículo. Ver `products`.
 3. ¿Nombre de la plataforma y dominio? Hace falta para la fase 4.

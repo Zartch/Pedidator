@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☐ F1-11 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -117,8 +117,8 @@ Firmas que fija F1-1 y que usan todos los demás:
 type Base = { id: string; company: string; version: number; updatedBy: string; deleted: boolean; created: string; updated: string }
 type OrderStatus = 'pending' | 'delivered' | 'cancelled'      // "preparado" NO es un estado: se calcula
 type Measure = 'unit' | 'weight'
-type Customer, Order, OrderItem, Ticket      // = Base & campos de SPEC §3
-type CollectionName = 'customers' | 'orders' | 'order_items' | 'tickets'
+type Customer, Product, Order, OrderItem, Ticket      // = Base & campos de SPEC §3
+type CollectionName = 'customers' | 'products' | 'orders' | 'order_items' | 'tickets'
 
 // shared/weight.ts
 parseWeight(input: string, unit: 'g' | 'kg'): number | null   // gramos enteros. "750",'g' -> 750 ; "1,5",'kg' -> 1500 ; "750g" o "1,5 kg" mandan sobre unit
@@ -308,6 +308,21 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 - **Tareas:** en modo demo: crear un encargo para hoy con dos artículos (uno por peso escrito en gramos) y verlo en el día; marcar sus artículos y ver que pasa a preparado y sube la barra de progreso; crear un encargo para mañana con un artículo de "preparar el día anterior" y verlo hoy en "Preparar hoy para mañana" y el color en el calendario de mañana; entregar un encargo y ver que se pliega en "Entregados"; crear ticket y marcarlo pagado; cambiar de idioma; recargar sin conexión y comprobar que los datos siguen.
 - **Hecho cuando:** `npm run e2e -- --trace off` pasa. Si un test descubre un fallo de la app, arréglalo solo si es de una línea; si no, descríbelo en el informe.
 
+### F1-11 · Catálogo de productos · `sonnet`
+_Añadido en la puerta G1 (27/11/2026) a partir de la prueba del usuario: la pregunta abierta 2 de SPEC §10 queda respondida. El contrato (`Product` en `shared/types.ts`, tabla `products` en la versión 2 de Dexie y `RecordOf` en `mutate.ts`) ya lo ha fijado el orquestador._
+- **Lee:** SPEC §3 `products` y `order_items` ("Preparar la víspera" y "Precio"), §5 puntos 3 y 9; `docs/design/README.md` y los bloques Field y OrderCard de `docs/design/components.css` (sin maqueta propia: la lista copia el patrón de `CustomersPage` y el formulario usa los bloques Field, como la ficha de `screens/Cliente.dc.html`).
+- **Archivos:** `src/data/db.ts`, `src/data/repo/{products,orders}.ts` (+ tests), `src/data/hooks.ts` (+ test), `src/pages/{ProductsPage,ProductPage}.tsx` (+ tests), `src/routes.tsx`, `src/components/layout/MainNav.tsx`, `src/components/orders/{ItemsEditor,ItemEditorRow,PriceDisclosure}.tsx`, `src/pages/OrderFormPage.tsx` (+ test), `src/demo/seed.ts`, `src/i18n/{ca,es}/{products,common}.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `db.ts`: en la versión 2, un `upgrade` que rellena `products` con un producto por `nameKey` distinto de los `order_items` no borrados (del último uso: `name`, `measure`, `prepDayBefore`; sin precio). Por `mutate`/outbox no: es un relleno local.
+  2. `repo/products.ts`: `findProductByName`, `createProduct`, `updateProduct` (recalcula `nameKey`; nombre vacío o ya usado por otro producto vivo → error), `deleteProduct` (`softDelete`), `ensureProductsForItems(items)` (crea los que no existan por `nameKey`, con `measure` y `prepDayBefore`, sin precio). Todo por `mutate.ts`.
+  3. `repo/orders.ts`: al guardar un encargo, `ensureProductsForItems` en la misma transacción.
+  4. `hooks.ts`: `queryProducts`/`useProducts` (vivos, por `nameKey`) y `useProduct(id)`; `querySuggestItems` pasa a salir **solo** del catálogo y devuelve también `unitPriceCents` (el campo `lastUsed` desaparece si nadie lo usa).
+  5. Pantallas `/products` (buscador por `nameKey`, tarjetas compactas: nombre, "Unidades"/"Peso", insignia `prep` si `prepDayBefore`; sin precio; botón "Nuevo producto"; mensaje centrado si no hay) y `/products/new`, `/products/:id` (nombre, unidades/peso, "Preparar el día anterior", desplegable "Precio" cerrado con precio por unidad o por kilo con `parseMoney`, notas; "Guardar" con `SafeForm`; "Borrar producto" con confirmación en `AppDialog`). Entrada "Productos" en `MainNav` (icono de `lucide-react`) tras Clientes.
+  6. Formulario de encargo: al elegir una sugerencia se proponen `measure`, `prepDayBefore` y, si el producto tiene precio y el artículo no, `unitPriceCents`.
+  7. `seed.ts`: crea el catálogo de la demo (los nombres que usa, algunos con precio) y "Borrar datos" lo borra también.
+- **No hagas:** relación del artículo con el producto; cambiar encargos ya hechos al editar un producto; mostrar precios en la lista ni en el día; nada de servidor.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el relleno de la versión 2 crea un producto por nombre (`"Entrecot"` y `" entrecot "` → uno); guardar un encargo con un nombre nuevo crea el producto y con uno existente no lo duplica; editar un producto no cambia los artículos ya guardados; un producto borrado deja de salir en las sugerencias; elegir una sugerencia con precio lo propone en el artículo; renombrar a un nombre ya usado da error. En `e2e/demo.spec.ts`, un caso: abrir Productos desde el menú, editar uno y ver el cambio en la sugerencia del formulario.
+
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).
 - **Manual:** instalar en un iPad desde Safari y usar en modo avión. El carnicero la usa unos días. **Se ajustan las pantallas antes de seguir** y se responde la pregunta abierta 1 de SPEC §10.
@@ -336,7 +351,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Tareas:**
   1. Todas las colecciones de SPEC §3 con sus campos, campos comunes y `autodate`. Reglas de lectura estándar de POCKETBASE.md §5; reglas de escritura `null` en **todas**. `companies`: lectura con `id = @request.auth.company`. `users`: ampliación de POCKETBASE.md §4.
   2. `change_log`: lectura por empresa. `sync_ops` y `customer_aliases`: todas las reglas `null`.
-  3. Índices: único parcial de `customers`; (`company`, `updated`) en las cuatro colecciones sincronizables; `order_items(order)`; `change_log(company, recordId)` y `(company, orderId)`; único `sync_ops(user, opId)`; único `customer_aliases(aliasId)`.
+  3. Índices: único parcial de `customers` y de `products`; (`company`, `updated`) en las cinco colecciones sincronizables; `order_items(order)`; `change_log(company, recordId)` y `(company, orderId)`; único `sync_ops(user, opId)`; único `customer_aliases(aliasId)`.
   4. `tickets.photo` protegido con `thumbs: ["300x0"]`, 5 MB, JPEG/PNG.
 - **Hecho cuando:** `npm run test:integration` pasa con tests de: registro público 403; un usuario no puede hacer `PATCH` de su `role` ni de su `company` (403); `POST` REST a cada colección sincronizable 403; login de usuario inactivo falla; un usuario lista solo los usuarios de su empresa.
 
@@ -356,7 +371,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Tareas:** `POST /api/sync/push` como adaptador fino sobre `shared/sync`:
   1. `requireAuth("users")` + comprobar `active`. Máximo 200 operaciones por petición.
   2. Por operación, en su propia transacción: empresa (la del usuario; el `platform_admin` usa la de la operación, que debe existir) → `validateOp` → idempotencia por (`user`, `opId`) → cargar el registro → `decideOp` → aplicar → `change_log` → `sync_ops`.
-  3. El servidor fija `version`, `updatedBy`, `company`; en `customers` recalcula `nameKey`.
+  3. El servidor fija `version`, `updatedBy`, `company`; en `customers` y `products` recalcula `nameKey`.
   4. `change_log` con `diff`, `kind`, `merged`, `forced`, `overwrote`, `opId`, `deviceId`, y `orderId` en los cambios de `order_items`.
   5. Respuesta con el formato de SPEC §4.3. En `conflict`, `updatedByName`.
   6. Una operación rechazada o en conflicto no impide procesar las demás.
@@ -368,7 +383,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Archivos:** `pb/pb_hooks/sync.pb.js`, `pb/pb_hooks/upload.pb.js`, `tests/integration/{push-relations,upload}.test.ts`.
 - **Tareas:**
   1. Antes de validar relaciones, traducir los ids de cliente por `customer_aliases`. Toda relación debe existir y ser de la misma empresa; si no, `forbidden`.
-  2. `create` de `customers` con `nameKey` existente (no borrado) en la empresa → `ok` con `mergedInto` + alta del alias, sin crear registro.
+  2. `create` de `customers` con `nameKey` existente (no borrado) en la empresa → `ok` con `mergedInto` + alta del alias, sin crear registro. Igual en `products`, sin alias.
   3. `delete` de un pedido: borrado lógico de sus artículos en la misma transacción, cada uno con su `change_log`.
   4. `POST /api/sync/upload/{collection}/{id}` (POCKETBASE.md §8): solo `tickets`/`photo`; usuario activo y misma empresa; `version++`, `change_log`, devuelve el registro.
 - **Hecho cuando:** `npm run test:integration` pasa con tests de: lote con "crear cliente duplicado" + "crear pedido con el id duplicado" → el pedido queda apuntando al cliente existente; relación a un cliente de otra empresa → `forbidden`; cascada; subida correcta; subida a ticket de otra empresa 403; `PATCH` REST con archivo 403; foto sin token 404, con token de la empresa 200, con token de otra empresa 404.
