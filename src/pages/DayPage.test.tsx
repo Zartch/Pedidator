@@ -10,10 +10,10 @@ import {
 } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { closeSession, startSession } from '@/data/session'
+import { closeSession, requireSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import { getOrderItems } from '@/data/repo/orderItems'
-import { createOrder, deliverOrder } from '@/data/repo/orders'
+import { createOrder, deliverOrder, getOrder } from '@/data/repo/orders'
 import { addDays, madridDateTimeToUtcIso, todayMadrid } from '@/lib/dates'
 import DayPage from './DayPage'
 
@@ -46,6 +46,11 @@ function renderDay() {
       </Routes>
     </MemoryRouter>,
   )
+}
+
+async function dialogButton(name: string) {
+  const dialog = await screen.findByRole('dialog')
+  return within(dialog).getByRole('button', { name })
 }
 
 async function seedOrder(
@@ -151,6 +156,7 @@ describe('DayPage', () => {
     fireEvent.click(
       within(card('Marta')).getByRole('button', { name: 'Lliurar' }),
     )
+    fireEvent.click(await dialogButton('Lliurar'))
 
     await waitFor(() =>
       expect(
@@ -180,7 +186,7 @@ describe('DayPage', () => {
     renderDay()
     await screen.findAllByText('Marta')
     fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Lliurar igualment' }))
+    fireEvent.click(await dialogButton('Lliurar'))
     const group = await screen.findByRole('button', { name: 'Lliurats (1)' })
     fireEvent.click(group)
     fireEvent.click(screen.getByRole('button', { name: 'Torna a pendent' }))
@@ -210,13 +216,77 @@ describe('DayPage', () => {
     expect(dialog).toBeDefined()
     expect(screen.queryByRole('button', { name: 'Lliurats (1)' })).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Lliurar igualment' }))
+    fireEvent.click(await dialogButton('Lliurar'))
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: 'Lliurats (1)' }),
       ).toBeDefined(),
     )
     expect(order.id).toBeTruthy()
+  })
+
+  it('"Lliurar" always asks, and "Tornar" changes nothing', async () => {
+    const today = todayMadrid()
+    const { order } = await seedOrder('Marta', today, '10:00', [
+      { name: 'Pollastre', done: true },
+    ])
+    renderDay()
+    await screen.findAllByText('Marta')
+    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    expect(await screen.findByRole('dialog')).toBeDefined()
+    fireEvent.click(await dialogButton('Tornar'))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect((await getOrder(order.id))?.status).toBe('pending')
+    expect(await requireSession().db.tickets.count()).toBe(0)
+  })
+
+  it('"Lliurar i deixar a deure" delivers and creates the pending ticket', async () => {
+    const today = todayMadrid()
+    const { order } = await seedOrder('Marta', today, '10:00', [
+      { name: 'Pollastre', done: true },
+    ])
+    renderDay()
+    await screen.findAllByText('Marta')
+    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(await dialogButton('Lliurar i deixar a deure'))
+    const dialog = screen.getByRole('dialog')
+    expect((within(dialog).getByLabelText('Notes') as HTMLTextAreaElement).value).toMatch(
+      /^Encàrrec del \d\d\/\d\d 10:00$/,
+    )
+    // Empty amount: nothing happens and it says so.
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }))
+    expect(await within(dialog).findByText('Indica un import vàlid')).toBeDefined()
+    expect((await getOrder(order.id))?.status).toBe('pending')
+
+    fireEvent.change(within(dialog).getByLabelText('Import'), { target: { value: '12,50' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }))
+    await waitFor(async () =>
+      expect((await getOrder(order.id))?.status).toBe('delivered'),
+    )
+    const tickets = await requireSession().db.tickets.toArray()
+    expect(tickets).toHaveLength(1)
+    expect(tickets[0]).toMatchObject({
+      customer: (await getOrder(order.id))?.customer,
+      amountCents: 1250,
+      paid: false,
+    })
+    expect(tickets[0]?.notes).toMatch(/^Encàrrec del/)
+  })
+
+  it('an order with prices pre-fills the amount', async () => {
+    const today = todayMadrid()
+    const customer = await getOrCreateCustomerByName('Marta')
+    await createOrder(
+      { customer: customer.id, pickupAt: madridDateTimeToUtcIso(today, '10:00') },
+      [{ name: 'Pollastre', measure: 'unit', quantity: 2, unitPriceCents: 450 }],
+    )
+    renderDay()
+    await screen.findAllByText('Marta')
+    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(await dialogButton('Lliurar i deixar a deure'))
+    expect(
+      (within(screen.getByRole('dialog')).getByLabelText('Import') as HTMLInputElement).value,
+    ).toBe('9,00')
   })
 
   it('flags an item that should have been prepared yesterday', async () => {

@@ -122,6 +122,10 @@ test('lliurar un encàrrec el plega a "Lliurats"', async ({ page }) => {
   const card = page.getByRole('article').filter({ hasText: 'Anna Puig' })
   await card.getByRole('checkbox', { name: /Costelles/ }).click()
   await card.getByRole('button', { name: 'Lliurar', exact: true }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Lliurar', exact: true })
+    .click()
 
   await expect(card).toHaveCount(0)
   await expect(page.getByText('1 lliurat', { exact: true })).toBeVisible()
@@ -133,6 +137,28 @@ test('lliurar un encàrrec el plega a "Lliurats"', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Anna Puig/ })).toHaveCount(0)
   await group.click()
   await expect(page.getByRole('link', { name: /Anna Puig/ })).toBeVisible()
+})
+
+test('lliurar deixant a deure crea el ticket pendent', async ({ page }) => {
+  await openDay(page)
+  await newOrder(page, { customer: 'Laia Roca', day: madridDay(), time: '12:00' })
+  const row = itemRow(page, 1)
+  await row.getByLabel('Article', { exact: true }).fill('Llonganissa')
+  await row.getByLabel('Quantitat').fill('1')
+  await save(page)
+
+  const card = page.getByRole('article').filter({ hasText: 'Laia Roca' })
+  await card.getByRole('checkbox', { name: /Llonganissa/ }).click()
+  await card.getByRole('button', { name: 'Lliurar', exact: true }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Lliurar i deixar a deure' }).click()
+  await dialog.getByLabel('Import').fill('8,40')
+  await dialog.getByRole('button', { name: 'Lliurar i crear ticket' }).click()
+  await expect(card).toHaveCount(0)
+
+  await page.getByRole('link', { name: 'Tickets' }).click()
+  await expect(page.getByRole('heading', { name: 'Laia Roca' })).toBeVisible()
+  await expect(page.getByText('8,40').first()).toBeVisible()
 })
 
 test('crear un ticket i marcar-lo com a pagat', async ({ page }) => {

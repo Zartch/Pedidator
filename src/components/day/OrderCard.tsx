@@ -5,11 +5,10 @@ import { Check, Circle, Flag, PackageCheck } from 'lucide-react'
 import { isPrepLate, orderProgress } from '@shared/progress'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { AppDialog } from '@/components/ui/AppDialog'
 import type { DayOrder } from '@/data/hooks'
-import { deliverOrder } from '@/data/repo/orders'
 import { utcIsoToMadridTime } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { DeliverDialog } from './DeliverDialog'
 import { ItemCheckRow } from './ItemCheckRow'
 
 type Props = {
@@ -28,11 +27,6 @@ export function OrderCard({ data, today, isNext = false }: Props) {
   const { order, customer, items } = data
   const progress = orderProgress(items)
   const [confirming, setConfirming] = useState(false)
-
-  async function deliver() {
-    setConfirming(false)
-    await deliverOrder(order.id)
-  }
 
   return (
     <article
@@ -88,9 +82,7 @@ export function OrderCard({ data, today, isNext = false }: Props) {
         <Button
           variant={progress.prepared ? 'primary' : 'secondary'}
           className="px-3 tablet:px-5"
-          onClick={() =>
-            progress.prepared ? void deliver() : setConfirming(true)
-          }
+          onClick={() => setConfirming(true)}
         >
           <PackageCheck
             className="hidden size-5 tablet:block"
@@ -115,30 +107,9 @@ export function OrderCard({ data, today, isNext = false }: Props) {
           {order.notes}
         </p>
       )}
-      {/* Mounted only while asking: a closed AppDialog is still laid out (see report). */}
+      {/* Mounted only while asking: a closed AppDialog is still laid out. */}
       {confirming && (
-        <AppDialog
-          open
-          title={t('deliverDialog.title')}
-          onClose={() => setConfirming(false)}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setConfirming(false)}>
-                {t('deliverDialog.cancel')}
-              </Button>
-              <Button variant="primary" onClick={() => void deliver()}>
-                {t('deliverDialog.confirm')}
-              </Button>
-            </>
-          }
-        >
-          <p>
-            {t('deliverDialog.message', {
-              done: progress.done,
-              total: progress.total,
-            })}
-          </p>
-        </AppDialog>
+        <DeliverDialog data={data} onClose={() => setConfirming(false)} />
       )}
     </article>
   )

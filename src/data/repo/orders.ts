@@ -1,4 +1,4 @@
-import type { Order, OrderItem } from '@shared/types'
+import type { Order, OrderItem, Ticket } from '@shared/types'
 import { create, update, softDelete, writeTx } from '../mutate'
 import { requireSession } from '../session'
 import {
@@ -8,6 +8,7 @@ import {
   type ItemInput,
 } from './orderItems'
 import { ensureProductsForItems } from './products'
+import { createTicket } from './tickets'
 
 export type OrderFields = {
   customer: string
@@ -89,6 +90,31 @@ export function deliverOrder(id: string): Promise<Order> {
   return update(db, ctx, 'orders', id, {
     status: 'delivered',
     deliveredAt: new Date().toISOString(),
+  })
+}
+
+/**
+ * Delivers the order and leaves `amountCents` owed as a pending ticket of the
+ * same customer, in one transaction: if the ticket cannot be created the
+ * order stays as it was.
+ */
+export async function deliverOrderWithTicket(
+  id: string,
+  fields: { amountCents: number; notes?: string },
+): Promise<{ order: Order; ticket: Ticket }> {
+  if (!Number.isSafeInteger(fields.amountCents) || fields.amountCents <= 0)
+    throw new Error('amountCents must be an integer greater than 0')
+  const { db } = requireSession()
+  return writeTx(db, async () => {
+    const current = await getOrder(id)
+    if (!current) throw new Error('order not found')
+    const order = await deliverOrder(id)
+    const ticket = await createTicket({
+      customer: current.customer,
+      amountCents: fields.amountCents,
+      notes: fields.notes,
+    })
+    return { order, ticket }
   })
 }
 

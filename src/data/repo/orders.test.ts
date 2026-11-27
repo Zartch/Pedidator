@@ -9,6 +9,7 @@ import {
   createOrder,
   deleteOrder,
   deliverOrder,
+  deliverOrderWithTicket,
   getOrder,
   saveOrder,
 } from './orders'
@@ -52,6 +53,43 @@ describe('order repo', () => {
     expect(d.status).toBe('delivered')
     expect(d.deliveredAt).toBeTruthy()
     expect((await cancelOrder(order.id)).status).toBe('cancelled')
+  })
+
+  it('deliverOrderWithTicket delivers and creates the pending ticket of the same customer', async () => {
+    const { db } = requireSession()
+    const { order } = await make()
+    const r = await deliverOrderWithTicket(order.id, { amountCents: 1250, notes: ' resto ' })
+    expect(r.order.status).toBe('delivered')
+    const tickets = await db.tickets.toArray()
+    expect(tickets).toHaveLength(1)
+    expect(tickets[0]).toMatchObject({
+      customer: customerId,
+      amountCents: 1250,
+      notes: 'resto',
+      paid: false,
+    })
+  })
+
+  it('deliverOrderWithTicket rejects an amount that is not an integer greater than 0', async () => {
+    const { db } = requireSession()
+    const { order } = await make()
+    for (const amountCents of [0, -5, 1.5, Number.NaN])
+      await expect(deliverOrderWithTicket(order.id, { amountCents })).rejects.toThrow()
+    expect((await getOrder(order.id))?.status).toBe('pending')
+    expect(await db.tickets.count()).toBe(0)
+  })
+
+  it('deliverOrderWithTicket leaves the order pending if the ticket cannot be created', async () => {
+    const { db } = requireSession()
+    const { order } = await make()
+    const fail = () => {
+      throw new Error('boom')
+    }
+    db.tickets.hook('creating', fail)
+    await expect(deliverOrderWithTicket(order.id, { amountCents: 500 })).rejects.toThrow()
+    db.tickets.hook('creating').unsubscribe(fail)
+    expect((await getOrder(order.id))?.status).toBe('pending')
+    expect((await db.orders.get(order.id))?.deliveredAt).toBeFalsy()
   })
 
   it('deleteOrder soft-deletes order and items; not-yet-uploaded leaves no ops', async () => {

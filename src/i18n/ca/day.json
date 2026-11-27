@@ -71,8 +71,16 @@
   "deliverDialog": {
     "title": "Lliurar l'encàrrec",
     "message": "Aquest encàrrec encara no està preparat del tot ({{done}} de {{total}} articles). Vols lliurar-lo igualment?",
-    "confirm": "Lliurar igualment",
-    "cancel": "Cancel·la"
+    "ready": "L'encàrrec està preparat.",
+    "deliver": "Lliurar",
+    "owe": "Lliurar i deixar a deure",
+    "back": "Tornar",
+    "createTicket": "Lliurar i crear ticket",
+    "amount": "Import",
+    "notes": "Notes",
+    "defaultNotes": "Encàrrec del {{date}} {{time}}",
+    "errorAmount": "Indica un import vàlid",
+    "errorSave": "No s'ha pogut lliurar l'encàrrec"
   },
   "deliveredGroup": {
     "title": "Lliurats ({{count}})",

@@ -71,8 +71,16 @@
   "deliverDialog": {
     "title": "Entregar el encargo",
     "message": "Este encargo aún no está preparado del todo ({{done}} de {{total}} artículos). ¿Quieres entregarlo igualmente?",
-    "confirm": "Entregar igualmente",
-    "cancel": "Cancelar"
+    "ready": "El encargo está preparado.",
+    "deliver": "Entregar",
+    "owe": "Entregar y dejar a deber",
+    "back": "Volver",
+    "createTicket": "Entregar y crear ticket",
+    "amount": "Importe",
+    "notes": "Notas",
+    "defaultNotes": "Encargo del {{date}} {{time}}",
+    "errorAmount": "Indica un importe válido",
+    "errorSave": "No se ha podido entregar el encargo"
   },
   "deliveredGroup": {
     "title": "Entregados ({{count}})",
