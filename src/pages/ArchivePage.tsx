@@ -1,10 +1,9 @@
-import { useState } from 'react'
-import { Ban, Check } from 'lucide-react'
+import { Ban, Check, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { useArchivedOrders, type DayOrder } from '@/data/hooks'
+import { useArchivedOrders, useCustomer, type DayOrder } from '@/data/hooks'
 import { formatQuantity } from '@shared/weight'
 
 const MADRID = 'Europe/Madrid'
@@ -35,14 +34,33 @@ export default function ArchivePage() {
   const { t, i18n } = useTranslation('archive')
   const locale = i18n.language === 'es' ? 'es-ES' : 'ca-ES'
 
-  const [text, setText] = useState('')
-  const [fromDay, setFromDay] = useState('')
-  const [toDay, setToDay] = useState('')
+  const [params, setParams] = useSearchParams()
+  const text = params.get('q') ?? ''
+  const fromDay = params.get('from') ?? ''
+  const toDay = params.get('to') ?? ''
+  const customerId = params.get('customer') ?? ''
+  const customer = useCustomer(customerId || undefined)
+
+  /** Sets or removes URL filters, keeping the rest. */
+  function setFilters(changes: Record<string, string>) {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        for (const [key, value] of Object.entries(changes)) {
+          if (value) next.set(key, value)
+          else next.delete(key)
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }
 
   const orders = useArchivedOrders({
     text: text.trim() || undefined,
     fromDay: fromDay || undefined,
     toDay: toDay || undefined,
+    customerId: customerId || undefined,
   })
 
   return (
@@ -52,6 +70,24 @@ export default function ArchivePage() {
       </h2>
 
       <div className="flex flex-col gap-3">
+        {customerId && (
+          <div>
+            <span
+              data-testid="customer-chip"
+              className="inline-flex min-h-(--touch-min) items-center gap-2 rounded-full border-[1.5px] border-brand-strong bg-brand-soft pr-1 pl-4 font-semibold text-brand-strong"
+            >
+              {customer?.name ?? t('noCustomer')}
+              <button
+                type="button"
+                aria-label={t('removeCustomer')}
+                onClick={() => setFilters({ customer: '' })}
+                className="flex size-10 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-brand-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </span>
+          </div>
+        )}
         <label className="flex flex-col gap-1 text-(length:--type-label-size) font-semibold text-ink-muted">
           {t('search.label')}
           <input
@@ -59,7 +95,7 @@ export default function ArchivePage() {
             className={FIELD}
             placeholder={t('search.placeholder')}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => setFilters({ q: e.target.value })}
           />
         </label>
 
@@ -70,7 +106,7 @@ export default function ArchivePage() {
               type="date"
               className={FIELD}
               value={fromDay}
-              onChange={(e) => setFromDay(e.target.value)}
+              onChange={(e) => setFilters({ from: e.target.value })}
             />
           </label>
           <label className="flex flex-col gap-1 text-(length:--type-label-size) font-semibold text-ink-muted">
@@ -79,7 +115,7 @@ export default function ArchivePage() {
               type="date"
               className={FIELD}
               value={toDay}
-              onChange={(e) => setToDay(e.target.value)}
+              onChange={(e) => setFilters({ to: e.target.value })}
             />
           </label>
         </div>
@@ -88,10 +124,7 @@ export default function ArchivePage() {
           <div>
             <Button
               variant="ghost"
-              onClick={() => {
-                setFromDay('')
-                setToDay('')
-              }}
+              onClick={() => setFilters({ from: '', to: '' })}
             >
               {t('range.clear')}
             </Button>

@@ -343,7 +343,13 @@ export async function queryCustomerOrders(
     .sort((a, b) => b.pickupAt.localeCompare(a.pickupAt))
 }
 
-export type ArchiveFilter = { text?: string; fromDay?: string; toDay?: string }
+export type ArchiveFilter = {
+  text?: string
+  fromDay?: string
+  toDay?: string
+  /** Only orders of this customer id. */
+  customerId?: string
+}
 
 /**
  * Delivered and cancelled orders (not deleted). `text` is matched as a substring
@@ -360,6 +366,7 @@ export async function queryArchivedOrders(
     await db.orders.orderBy('pickupAt').reverse().toArray()
   ).filter((o) => {
     if (o.deleted || o.status === 'pending') return false
+    if (filter.customerId && o.customer !== filter.customerId) return false
     if (fromDay || toDay) {
       const day = madridDay(o.pickupAt)
       if (fromDay && day < fromDay) return false
@@ -426,6 +433,8 @@ export type PaidTicketRow = {
 }
 
 export type PaidTicketFilter = {
+  /** Only tickets of this customer id. */
+  customerId?: string
   /** Substring of the customer's nameKey. */
   text?: string
   /** Inclusive Madrid days ("YYYY-MM-DD") matched against `paidAt`. */
@@ -451,7 +460,14 @@ export async function queryPaidTickets(
     ? Date.parse(madridDayRangeUtc(filter.to).to)
     : Number.POSITIVE_INFINITY
   // Booleans are not valid IndexedDB keys, so `paid` is filtered, not queried.
-  const tickets = (await db.tickets.filter((t) => t.paid && !t.deleted).toArray())
+  const tickets = (
+    await db.tickets
+      .filter(
+        (t) =>
+          t.paid && !t.deleted && (!filter.customerId || t.customer === filter.customerId),
+      )
+      .toArray()
+  )
     .filter((t) => {
       if (!hasRange) return true
       if (!t.paidAt) return false
@@ -541,7 +557,7 @@ export const useCustomerOrders = (customerId: string) =>
 export const useArchivedOrders = (filter: ArchiveFilter) =>
   useDbQuery(
     (db) => queryArchivedOrders(db, filter),
-    [filter.text, filter.fromDay, filter.toDay],
+    [filter.text, filter.fromDay, filter.toDay, filter.customerId],
   )
 
 export const useMonthDeliveredCount = (month: string) =>
@@ -560,5 +576,5 @@ export const useCustomerTickets = (customerId: string) =>
 export const usePaidTickets = (filter: PaidTicketFilter) =>
   useDbQuery(
     (db) => queryPaidTickets(db, filter),
-    [filter.text, filter.from, filter.to],
+    [filter.text, filter.from, filter.to, filter.customerId],
   )

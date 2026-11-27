@@ -306,6 +306,18 @@ describe('archive and counts', () => {
     ).toEqual([])
   })
 
+  it('filters archived orders by customer id, combined with the day range', async () => {
+    const { ana, o1, o3 } = await seed()
+    expect(
+      (await queryArchivedOrders(db(), { customerId: ana.id })).map((d) => d.order.id),
+    ).toEqual([o1.id, o3.id])
+    expect(
+      (
+        await queryArchivedOrders(db(), { customerId: ana.id, fromDay: '2026-12-05' })
+      ).map((d) => d.order.id),
+    ).toEqual([o1.id])
+  })
+
   it('counts delivered orders of the Madrid month', async () => {
     await seed()
     expect(await queryMonthDeliveredCount(db(), '2026-12')).toBe(2)
@@ -349,6 +361,16 @@ describe("paid tickets", () => {
     const rows = await queryPaidTickets(db())
     expect(rows.map((r) => r.ticket.id)).toEqual([newer.id, older.id])
     expect(rows.map((r) => r.customer?.name)).toEqual(["Zoe", "Ana"])
+  })
+
+  it("filters by customer id, combined with text", async () => {
+    const ana = await getOrCreateCustomerByName("Ana Puig")
+    const zoe = await getOrCreateCustomerByName("Zoe")
+    await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
+    await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
+    const rows = await queryPaidTickets(db(), { customerId: zoe.id })
+    expect(rows.map((r) => r.ticket.amountCents)).toEqual([200])
+    expect(await queryPaidTickets(db(), { customerId: zoe.id, text: "ana" })).toEqual([])
   })
 
   it("filters by customer nameKey", async () => {

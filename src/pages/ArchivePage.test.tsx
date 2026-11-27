@@ -27,9 +27,9 @@ afterEach(() => {
   closeSession()
 })
 
-function renderPage() {
+function renderPage(url = '/archive') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[url]}>
       <ArchivePage />
     </MemoryRouter>,
   )
@@ -124,5 +124,42 @@ describe('ArchivePage filters', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Totes les dates' }))
     await waitFor(() => expect(orderLinks()).toHaveLength(2))
+  })
+})
+
+describe('ArchivePage URL filters', () => {
+  it('filters by customer, from and to from the URL, and the chip removes the customer', async () => {
+    const ana = await getOrCreateCustomerByName('Ana Pérez')
+    const joan = await getOrCreateCustomerByName('Joan Puig')
+    for (const [c, at] of [
+      [ana, '2026-12-17T09:30:00.000Z'],
+      [ana, '2026-12-25T09:30:00.000Z'],
+      [joan, '2026-12-17T10:00:00.000Z'],
+    ] as const) {
+      const o = await createOrder({ customer: c.id, pickupAt: at }, [])
+      await deliverOrder(o.order.id)
+    }
+
+    renderPage(`/archive?customer=${ana.id}&from=2026-12-01&to=2026-12-20`)
+    await waitFor(() => expect(orderLinks()).toHaveLength(1))
+    expect(screen.getByTestId('customer-chip').textContent).toContain('Ana Pérez')
+    expect((screen.getByLabelText('Des de') as HTMLInputElement).value).toBe('2026-12-01')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Treure el filtre de client' }))
+    await waitFor(() => expect(orderLinks()).toHaveLength(2))
+    expect(screen.queryByTestId('customer-chip')).toBeNull()
+    // The date range stays.
+    expect((screen.getByLabelText('Des de') as HTMLInputElement).value).toBe('2026-12-01')
+  })
+
+  it('reads the text filter from q', async () => {
+    const ana = await getOrCreateCustomerByName('Ana Pérez')
+    const joan = await getOrCreateCustomerByName('Joan Puig')
+    for (const c of [ana, joan]) {
+      const o = await createOrder({ customer: c.id, pickupAt: '2026-12-17T09:30:00.000Z' }, [])
+      await deliverOrder(o.order.id)
+    }
+    renderPage('/archive?q=joan')
+    await waitFor(() => expect(orderLinks()).toHaveLength(1))
   })
 })

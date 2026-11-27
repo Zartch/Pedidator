@@ -60,6 +60,7 @@
     "backBody": "El ticket de {{name}} de {{amount}} tornarà a la llista de pendents.",
     "backConfirm": "Torna a pendent",
     "cancel": "Cancel·la",
-    "unknownCustomer": "Client desconegut"
+    "unknownCustomer": "Client desconegut",
+    "removeCustomer": "Treure el filtre de client"
   }
 }

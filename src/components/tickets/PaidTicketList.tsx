@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { formatMoney } from '@shared/format'
 import { madridDay } from '@shared/progress'
-import type { Ticket } from '@shared/types'
-import { usePaidTickets, type PaidTicketRow } from '@/data/hooks'
-import { getBlob } from '@/data/repo/blobs'
+import { useSearchParams } from 'react-router-dom'
+import { X } from 'lucide-react'
+import { useCustomer, usePaidTickets, type PaidTicketRow } from '@/data/hooks'
 import { markTicketUnpaid } from '@/data/repo/tickets'
 import { dateLocale, dayToDisplayDate } from '@/lib/dates'
 import { AppDialog } from '@/components/ui/AppDialog'
 import { Button } from '@/components/ui/Button'
 import { PhotoViewer } from './PhotoViewer'
+import { TicketThumb } from './TicketThumb'
 
 type Locale = 'ca' | 'es'
 
@@ -32,9 +33,27 @@ function formatDay(utcIso: string, language: string): string {
 export function PaidTicketList() {
   const { t, i18n } = useTranslation('tickets')
   const locale: Locale = i18n.language === 'es' ? 'es' : 'ca'
-  const [text, setText] = useState('')
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
+  const [params, setParams] = useSearchParams()
+  const text = params.get('q') ?? ''
+  const from = params.get('from') ?? ''
+  const to = params.get('to') ?? ''
+  const customerId = params.get('customer') ?? ''
+  const customer = useCustomer(customerId || undefined)
+
+  /** Sets or removes URL filters, keeping the rest (including `view=paid`). */
+  function setFilters(changes: Record<string, string>) {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        for (const [key, value] of Object.entries(changes)) {
+          if (value) next.set(key, value)
+          else next.delete(key)
+        }
+        return next
+      },
+      { replace: true },
+    )
+  }
   const [viewing, setViewing] = useState<string | null>(null)
   const [returning, setReturning] = useState<PaidTicketRow | null>(null)
 
@@ -42,8 +61,9 @@ export function PaidTicketList() {
     text: text.trim() || undefined,
     from: from || undefined,
     to: to || undefined,
+    customerId: customerId || undefined,
   })
-  const filtered = Boolean(text.trim() || from || to)
+  const filtered = Boolean(text.trim() || from || to || customerId)
   const total = (rows ?? []).reduce((sum, r) => sum + r.ticket.amountCents, 0)
 
   async function confirmReturn() {
@@ -56,6 +76,24 @@ export function PaidTicketList() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
+        {customerId && (
+          <div>
+            <span
+              data-testid="customer-chip"
+              className="inline-flex min-h-(--touch-min) items-center gap-2 rounded-full border-[1.5px] border-brand-strong bg-brand-soft pr-1 pl-4 font-semibold text-brand-strong"
+            >
+              {customer?.name ?? t('paid.unknownCustomer')}
+              <button
+                type="button"
+                aria-label={t('paid.removeCustomer')}
+                onClick={() => setFilters({ customer: '' })}
+                className="flex size-10 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-brand-strong focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </span>
+          </div>
+        )}
         <label className={LABEL}>
           {t('paid.search.label')}
           <input
@@ -63,27 +101,24 @@ export function PaidTicketList() {
             className={FIELD}
             placeholder={t('paid.search.placeholder')}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => setFilters({ q: e.target.value })}
           />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className={LABEL}>
             {t('paid.range.from')}
-            <input type="date" className={FIELD} value={from} onChange={(e) => setFrom(e.target.value)} />
+            <input type="date" className={FIELD} value={from} onChange={(e) => setFilters({ from: e.target.value })} />
           </label>
           <label className={LABEL}>
             {t('paid.range.to')}
-            <input type="date" className={FIELD} value={to} onChange={(e) => setTo(e.target.value)} />
+            <input type="date" className={FIELD} value={to} onChange={(e) => setFilters({ to: e.target.value })} />
           </label>
         </div>
         {(from || to) && (
           <div>
             <Button
               variant="ghost"
-              onClick={() => {
-                setFrom('')
-                setTo('')
-              }}
+              onClick={() => setFilters({ from: '', to: '' })}
             >
               {t('paid.range.clear')}
             </Button>
@@ -125,7 +160,7 @@ export function PaidTicketList() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <PaidThumb ticket={ticket} label={t('photo.open')} onOpen={() => setViewing(ticket.id)} />
+              <TicketThumb ticket={ticket} onOpen={() => setViewing(ticket.id)} />
               <div className="min-w-0 flex-1 text-(length:--type-label-size) text-ink-muted">
                 <div>{t('paid.ticketDate', { date: formatDay(ticket.created, i18n.language) })}</div>
                 {ticket.paidAt && (
@@ -166,41 +201,5 @@ export function PaidTicketList() {
 
       {viewing && <PhotoViewer ticketId={viewing} onClose={() => setViewing(null)} />}
     </div>
-  )
-}
-
-const THUMB =
-  'flex size-12 flex-none items-center justify-center overflow-hidden rounded-md border border-line bg-surface-sunken'
-
-/** Cached thumbnail when this device has it; otherwise a placeholder that still opens the viewer. */
-function PaidThumb({ ticket, label, onOpen }: { ticket: Ticket; label: string; onOpen: () => void }) {
-  const { t } = useTranslation('tickets')
-  const [url, setUrl] = useState<string | null>(null)
-
-  useEffect(() => {
-    let objectUrl: string | null = null
-    let cancelled = false
-    void getBlob('tickets', ticket.id, 'thumb').then((blob) => {
-      if (cancelled || !blob) return
-      objectUrl = URL.createObjectURL(blob)
-      setUrl(objectUrl)
-    })
-    return () => {
-      cancelled = true
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
-  }, [ticket.id])
-
-  if (!ticket.photo) {
-    return (
-      <div role="img" aria-label={t('photo.none')} className={`${THUMB} border-dashed border-line-strong text-center text-[11px] leading-[14px] font-semibold text-ink-muted`}>
-        {t('photo.none')}
-      </div>
-    )
-  }
-  return (
-    <button type="button" onClick={onOpen} aria-label={label} className={`${THUMB} cursor-pointer p-0 text-[11px] font-semibold text-ink-muted`}>
-      {url ? <img src={url} alt="" className="size-full object-cover" /> : t('photo.placeholder')}
-    </button>
   )
 }

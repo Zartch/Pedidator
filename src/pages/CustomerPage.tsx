@@ -1,14 +1,21 @@
-import { useState, useId, type FormEvent } from 'react'
+import { useState, useId, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
+import { format } from 'date-fns'
 import { ArrowLeft, CircleCheck, CircleX, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { AppDialog } from '@/components/ui/AppDialog'
+import { PhotoViewer } from '@/components/tickets/PhotoViewer'
+import { TicketThumb } from '@/components/tickets/TicketThumb'
 import { SafeForm } from '@/components/form/SafeForm'
 import { useCustomer, useCustomerOrders, useCustomerTickets } from '@/data/hooks'
 import { updateCustomer } from '@/data/repo/customers'
+import { markTicketPaid, markTicketUnpaid } from '@/data/repo/tickets'
+import { dateLocale, dayToDisplayDate } from '@/lib/dates'
 import type { Customer, Order, Ticket } from '@shared/types'
 import { formatMoney } from '@shared/format'
+import { madridDay } from '@shared/progress'
 
 type Locale = 'ca' | 'es'
 
@@ -25,8 +32,16 @@ function formatPickup(iso: string, locale: Locale): string {
   }).format(new Date(iso))
 }
 
-function unpaidTotal(tickets: Ticket[]): number {
-  return tickets.filter((t) => !t.paid).reduce((sum, t) => sum + t.amountCents, 0)
+const RECENT = 5
+
+const sumCents = (tickets: Ticket[]): number =>
+  tickets.reduce((sum, t) => sum + t.amountCents, 0)
+
+/** Madrid day of a UTC instant, formatted for people ("3 nov 2026"). */
+function formatDay(utcIso: string, language: string): string {
+  return format(dayToDisplayDate(madridDay(utcIso)), 'd MMM yyyy', {
+    locale: dateLocale(language),
+  })
 }
 
 /** Customer file: contact fields (saved explicitly), orders and tickets. */
@@ -70,42 +85,187 @@ export default function CustomerPage() {
       {/* Keyed by customer so the drafts start from the stored values once per customer. */}
       <ContactForm key={customer.id} customer={customer} />
 
-      <section className="flex flex-col gap-3">
-        <h3 className="font-display text-(length:--type-heading-size) font-[650]">{t('orders')}</h3>
-        {orders === undefined ? null : orders.length === 0 ? (
-          <p className="text-ink-muted">{t('noOrders')}</p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {orders.map((order) => (
-              <li key={order.id}>
-                <OrderRow order={order} locale={locale} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <OrdersBlock orders={orders} locale={locale} customerId={customer.id} />
+      <TicketsBlock tickets={tickets} locale={locale} customerId={customer.id} />
+    </section>
+  )
+}
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="font-display text-(length:--type-heading-size) font-[650]">{t('tickets')}</h3>
-          {tickets ? (
-            <span className="font-semibold tabular-nums">
-              {t('pendingTotal', { amount: formatMoney(unpaidTotal(tickets), locale) })}
-            </span>
-          ) : null}
+const H3 = 'font-display text-(length:--type-heading-size) font-[650]'
+
+function OrdersBlock({
+  orders,
+  locale,
+  customerId,
+}: {
+  orders: Order[] | undefined
+  locale: Locale
+  customerId: string
+}) {
+  const { t } = useTranslation('customers')
+  const [open, setOpen] = useState(false)
+  const panelId = useId()
+  const pending = (orders ?? [])
+    .filter((o) => o.status === 'pending')
+    .sort((a, b) => a.pickupAt.localeCompare(b.pickupAt))
+  // `orders` come newest pickup first.
+  const delivered = (orders ?? []).filter((o) => o.status === 'delivered').slice(0, RECENT)
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className={H3}>{t('pendingOrders')}</h3>
+      {orders === undefined ? null : pending.length === 0 ? (
+        <p className="text-ink-muted">{t('noPendingOrders')}</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {pending.map((order) => (
+            <li key={order.id}>
+              <OrderRow order={order} locale={locale} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div>
+        <Button aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
+          {open ? t('hideDelivered') : t('showDelivered')}
+        </Button>
+      </div>
+      {open && (
+        <div id={panelId} className="flex flex-col gap-3">
+          {delivered.length === 0 ? (
+            <p className="text-ink-muted">{t('noDelivered')}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {delivered.map((order) => (
+                <li key={order.id}>
+                  <OrderRow order={order} locale={locale} />
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            to={`/archive?customer=${encodeURIComponent(customerId)}`}
+            className="inline-flex min-h-(--touch-min) items-center self-start font-semibold text-brand-strong"
+          >
+            {t('explore')}
+          </Link>
         </div>
-        {tickets === undefined ? null : tickets.length === 0 ? (
-          <p className="text-ink-muted">{t('noTickets')}</p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {tickets.map((ticket) => (
-              <li key={ticket.id}>
-                <TicketRow ticket={ticket} locale={locale} />
-              </li>
-            ))}
-          </ul>
+      )}
+    </section>
+  )
+}
+
+function TicketsBlock({
+  tickets,
+  locale,
+  customerId,
+}: {
+  tickets: Ticket[] | undefined
+  locale: Locale
+  customerId: string
+}) {
+  const { t } = useTranslation('customers')
+  const [open, setOpen] = useState(false)
+  const [viewing, setViewing] = useState<string | null>(null)
+  const [returning, setReturning] = useState<Ticket | null>(null)
+  const panelId = useId()
+  const pending = (tickets ?? []).filter((x) => !x.paid)
+  const paidAll = (tickets ?? []).filter((x) => x.paid)
+  const paid = [...paidAll]
+    .sort((a, b) => (b.paidAt ?? '').localeCompare(a.paidAt ?? ''))
+    .slice(0, RECENT)
+
+  async function confirmReturn() {
+    if (!returning) return
+    const id = returning.id
+    setReturning(null)
+    await markTicketUnpaid(id)
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className={H3}>{t('pendingTickets')}</h3>
+        {tickets ? (
+          <span className="font-semibold tabular-nums">
+            {t('pendingTotal', { amount: formatMoney(sumCents(pending), locale) })}
+          </span>
+        ) : null}
+      </div>
+      {tickets === undefined ? null : pending.length === 0 ? (
+        <p className="text-ink-muted">{t('noPendingTickets')}</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {pending.map((ticket) => (
+            <li key={ticket.id}>
+              <TicketRow
+                ticket={ticket}
+                locale={locale}
+                onOpenPhoto={setViewing}
+                action={
+                  <Button onClick={() => void markTicketPaid(ticket.id)}>{t('markPaid')}</Button>
+                }
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div>
+        <Button aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
+          {open ? t('hidePaid') : t('showPaid')}
+        </Button>
+      </div>
+      {open && (
+        <div id={panelId} className="flex flex-col gap-3">
+          {paidAll.length > 0 && (
+            <span data-testid="paid-total" className="font-semibold tabular-nums">
+              {t('paidTotal', { amount: formatMoney(sumCents(paidAll), locale) })}
+            </span>
+          )}
+          {paid.length === 0 ? (
+            <p className="text-ink-muted">{t('noPaidTickets')}</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {paid.map((ticket) => (
+                <li key={ticket.id}>
+                  <TicketRow
+                    ticket={ticket}
+                    locale={locale}
+                    onOpenPhoto={setViewing}
+                    action={<Button onClick={() => setReturning(ticket)}>{t('backToPending')}</Button>}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link
+            to={`/tickets?view=paid&customer=${encodeURIComponent(customerId)}`}
+            className="inline-flex min-h-(--touch-min) items-center self-start font-semibold text-brand-strong"
+          >
+            {t('explore')}
+          </Link>
+        </div>
+      )}
+
+      <AppDialog
+        open={returning !== null}
+        title={t('backTitle')}
+        onClose={() => setReturning(null)}
+        footer={
+          <>
+            <Button onClick={() => setReturning(null)}>{t('cancel')}</Button>
+            <Button variant="primary" onClick={() => void confirmReturn()}>
+              {t('backConfirm')}
+            </Button>
+          </>
+        }
+      >
+        {returning && (
+          <p>{t('backBody', { amount: formatMoney(returning.amountCents, locale) })}</p>
         )}
-      </section>
+      </AppDialog>
+
+      {viewing && <PhotoViewer ticketId={viewing} onClose={() => setViewing(null)} />}
     </section>
   )
 }
@@ -210,27 +370,38 @@ function OrderRow({ order, locale }: { order: Order; locale: Locale }) {
   )
 }
 
-function TicketRow({ ticket, locale }: { ticket: Ticket; locale: Locale }) {
-  const { t } = useTranslation('customers')
+function TicketRow({
+  ticket,
+  locale,
+  onOpenPhoto,
+  action,
+}: {
+  ticket: Ticket
+  locale: Locale
+  onOpenPhoto: (ticketId: string) => void
+  action: ReactNode
+}) {
+  const { t, i18n } = useTranslation('customers')
   return (
-    <div className="flex min-h-(--touch-min) items-center justify-between gap-3 rounded-md border border-line bg-surface-raised px-4 py-2">
-      <div className="flex min-w-0 flex-col">
-        <span className="font-semibold tabular-nums">{formatMoney(ticket.amountCents, locale)}</span>
-        {ticket.notes ? (
-          <span className="truncate text-(length:--type-caption-size) text-ink-muted">
-            {ticket.notes}
+    <div className="flex flex-col gap-2 rounded-md border border-line bg-surface-raised px-4 py-3">
+      <div className="flex items-center gap-3">
+        <TicketThumb ticket={ticket} onOpen={() => onOpenPhoto(ticket.id)} />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="font-semibold tabular-nums">{formatMoney(ticket.amountCents, locale)}</span>
+          <span className="text-(length:--type-caption-size) text-ink-muted">
+            {t('ticketDate', { date: formatDay(ticket.created, i18n.language) })}
+            {ticket.paid && ticket.paidAt
+              ? ` · ${t('paidDate', { date: formatDay(ticket.paidAt, i18n.language) })}`
+              : ''}
           </span>
-        ) : null}
+          {ticket.notes ? (
+            <span className="truncate text-(length:--type-caption-size) text-ink-muted">
+              {ticket.notes}
+            </span>
+          ) : null}
+        </div>
       </div>
-      {ticket.paid ? (
-        <Badge variant="ok" icon={CircleCheck}>
-          {t('paid')}
-        </Badge>
-      ) : (
-        <Badge variant="warn" icon={Clock}>
-          {t('unpaid')}
-        </Badge>
-      )}
+      <div className="flex justify-end">{action}</div>
     </div>
   )
 }

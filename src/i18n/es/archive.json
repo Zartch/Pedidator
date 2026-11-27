@@ -15,5 +15,6 @@
   },
   "empty": "No hay encargos archivados con este filtro.",
   "noCustomer": "Cliente sin nombre",
-  "noItems": "Sin artículos"
+  "noItems": "Sin artículos",
+  "removeCustomer": "Quitar el filtro de cliente"
 }

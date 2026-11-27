@@ -271,3 +271,29 @@ test('editar un producte del catàleg es veu als suggeriments del formulari', as
   await name.fill('entre')
   await expect(page.getByRole('button', { name: 'Entrecot de vedella' })).toBeVisible()
 })
+
+test("des d'una fitxa, Veure pagats i Explorar obre Pagats filtrat pel client", async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Tickets' }).click()
+  for (const [name, amount] of [
+    ['Lluís Mas', '7,30'],
+    ['Anna Roca', '4,10'],
+  ]) {
+    await page.getByRole('button', { name: 'Nou ticket' }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('Client', { exact: true }).fill(name)
+    await dialog.getByLabel('Import').fill(amount)
+    await dialog.getByRole('button', { name: 'Desa', exact: true }).click()
+    await page.getByRole('button', { name: new RegExp(`^Marca com a pagat: ${name}`) }).click()
+  }
+
+  await page.getByRole('link', { name: 'Clients' }).click()
+  await page.getByRole('link', { name: /Lluís Mas/ }).click()
+  await page.getByRole('button', { name: 'Veure pagats' }).click()
+  await page.getByRole('link', { name: 'Explorar' }).click()
+
+  await expect(page).toHaveURL(/view=paid&customer=/)
+  await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Anna Roca' })).toHaveCount(0)
+  await expect(page.getByTestId('customer-chip')).toContainText('Lluís Mas')
+})
