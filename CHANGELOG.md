@@ -18,3 +18,4 @@
 - F1-10: pruebas de extremo a extremo de la demo (encargos, preparar la víspera, entregar, tickets, idioma y recarga sin conexión).
 - G1: correcciones del code review de la fase 1 (entregados siempre visibles y recuperables, diálogos, ticket con foto atómico, validación del formulario de encargo, limpieza de fotos, "no encontrado") y base de GitHub Pages según el nombre del repositorio.
 - F1-11: catálogo de productos (colección `products`, pantalla Productos en el menú, sugerencias del encargo desde el catálogo con precio opcional propuesto, alta automática al guardar un encargo y relleno desde los artículos existentes).
+- F1-12: "Entregar" siempre pide confirmación y permite "Entregar y dejar a deber", que entrega el encargo y crea un ticket pendiente con el importe (prellenado con el total si hay precios) en una sola transacción.
