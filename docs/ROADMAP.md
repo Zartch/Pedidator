@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☐ F1-14 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -344,6 +344,16 @@ _Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: consul
   3. `PaidTicketList`: buscador, fechas "desde"/"hasta", total de lo filtrado (`formatMoney`), tarjetas con cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre `PhotoViewer`); "Volver a pendiente" con confirmación en `AppDialog` usando `markTicketUnpaid` de `repo/tickets.ts`; mensaje centrado si no hay ninguno.
 - **No hagas:** cambiar `repo/tickets.ts`, el diálogo de nuevo ticket ni la vista de pendientes.
 - **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el filtro por cliente y por fechas (un pago a las 00:30 de Madrid cuenta en ese día); el orden por `paidAt`; el total filtrado; "Volver a pendiente" lo devuelve a la pestaña Pendientes. En `e2e/demo.spec.ts`: marcar un ticket pagado, verlo en Pagados y devolverlo a pendiente.
+
+### F1-14 · Tickets en la ficha del cliente · `haiku`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 puntos 4 y 5; `docs/design/README.md` y la maqueta `docs/design/screens/Cliente.dc.html`.
+- **Archivos:** `src/pages/CustomerPage.tsx` (+ test), `src/components/tickets/{TicketThumb,TicketGroup,PaidTicketList}.tsx`, `src/i18n/{ca,es}/customers.json`.
+- **Tareas:**
+  1. `TicketThumb.tsx`: la miniatura de un ticket que hoy está duplicada en `TicketGroup` (privada) y en `PaidTicketList` (`PaidThumb`), sacada a un componente común; los dos la usan sin cambiar su aspecto ni su comportamiento.
+  2. `CustomerPage`: los tickets en dos bloques, "Pendientes" con su total y "Pagados" con el total pagado (orden por `paidAt` descendente; los pendientes por fecha de creación descendente); en cada uno, mensaje si está vacío. Cada ticket: importe, notas, fecha del ticket, fecha de pago si la tiene y `TicketThumb` (abre `PhotoViewer`). "Marcar como pagado" (`markTicketPaid`) en los pendientes y "Volver a pendiente" con confirmación en `AppDialog` (`markTicketUnpaid`) en los pagados.
+- **No hagas:** cambiar `repo/tickets.ts` ni `hooks.ts` (`useCustomerTickets` ya devuelve todos); cambiar la pantalla Tickets más allá de usar `TicketThumb`.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: un cliente con tickets pendientes y pagados los muestra en su bloque con sus totales; "Marcar como pagado" lo pasa a Pagados; "Volver a pendiente" pide confirmación y lo devuelve; sin tickets de un tipo se ve el mensaje de vacío.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).

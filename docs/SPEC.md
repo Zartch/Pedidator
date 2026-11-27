@@ -395,7 +395,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
    - Diálogos con desplazamiento (teclado del iPad). No se cierran al tocar fuera.
    - Mensaje centrado "No hay tickets pendientes" cuando no hay ninguno.
    - **Pagados** (pestaña junto a "Pendientes", recordada en la URL `?view=paid`): lista de tickets pagados, del más reciente al más antiguo por `paidAt`, con búsqueda por cliente (`nameKey`) y rango de fechas de pago (días de Madrid). Cada uno: cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre el visor). Total de lo que se ve filtrado. "Volver a pendiente" con confirmación (quita `paid` y `paidAt`). Mensaje centrado si no hay ninguno.
-5. **Clientes**: lista, ficha (teléfono, notas, sus pedidos y tickets) y, en la fase 5, fusionar duplicados.
+5. **Clientes**: lista, ficha (teléfono, notas, sus pedidos y tickets) y, en la fase 5, fusionar duplicados. En la ficha, los tickets van en dos bloques: **Pendientes** (con su total) y **Pagados** (con el total pagado, por `paidAt` del más reciente al más antiguo). Cada ticket muestra importe, notas, fecha del ticket, fecha de pago si la tiene y miniatura (abre el visor), con "Marcar como pagado" o "Volver a pendiente" (con confirmación).
 6. **Conflictos** (ver 4.4).
 7. **Ajustes de la empresa** (`company_admin` y `platform_admin`): nombre, idioma, **color de la empresa** (con vista previa), destinatarios y hora del correo, usuarios (alta, rol, baja). Botones de "Enviar resumen ahora" y "Exportar JSON".
 8. **Administración de la plataforma** (`platform_admin`): lista de empresas, crear empresa y su primer administrador, y **cambiar de empresa** (cambia la base de datos local). El nombre de la empresa activa se ve siempre en la cabecera.
