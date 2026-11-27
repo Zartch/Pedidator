@@ -17,3 +17,4 @@
 - F1-9: datos de ejemplo y borrado en modo demo, `navigator.storage.persist()`, aviso de instalación en Safari de iOS y workflow de GitHub Pages.
 - F1-10: pruebas de extremo a extremo de la demo (encargos, preparar la víspera, entregar, tickets, idioma y recarga sin conexión).
 - G1: correcciones del code review de la fase 1 (entregados siempre visibles y recuperables, diálogos, ticket con foto atómico, validación del formulario de encargo, limpieza de fotos, "no encontrado") y base de GitHub Pages según el nombre del repositorio.
+- F1-11: catálogo de productos (colección `products`, pantalla Productos en el menú, sugerencias del encargo desde el catálogo con precio opcional propuesto, alta automática al guardar un encargo y relleno desde los artículos existentes).
