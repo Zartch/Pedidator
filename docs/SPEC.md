@@ -370,7 +370,9 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
    - **Barra de progreso**: _"3 de 8 encargos preparados"_, y debajo cuántos quedan por preparar y cuántos se han entregado.
    - **Próxima recogida**: el siguiente encargo sin entregar, con su hora y cliente, destacado.
    - **Encargos del día por hora de recogida.** Cada uno muestra hora (lo más grande), cliente, sus artículos con cantidad (`2,5 kg`, `750 g`, `6 u`) y notas, y su estado: por preparar, **preparado**, entregado. **Los artículos se marcan desde aquí**, sin abrir el encargo. Sin importes.
-   - Botón **"Entregar"** en cada encargo (rellena `deliveredAt`). Si se entrega sin estar preparado del todo, pide confirmación.
+   - Botón **"Entregar"** en cada encargo (rellena `deliveredAt`). **Siempre** abre un diálogo de confirmación (si no está preparado del todo, lo avisa dentro del diálogo) con tres botones: **"Entregar"**, **"Entregar y dejar a deber"** y "Volver".
+     - "Entregar y dejar a deber" despliega en el mismo diálogo el importe (`parseMoney`, obligatorio y mayor que 0; se rellena con el total del encargo si tiene precios, aunque sea estimado) y las notas (se rellenan con _"Encargo del 17/12 10:30"_), y un botón "Entregar y crear ticket".
+     - Entregar y crear el ticket pendiente (`paid: false`, mismo cliente, sin foto) van en **una sola transacción**. El ticket no guarda relación con el encargo.
    - **"Preparar hoy para mañana"**: los artículos con "preparar el día anterior" de los encargos de mañana, con cliente y hora. Si no hay, la sección no aparece.
    - Los entregados del día quedan al final, plegados (_"Entregados (2)"_), y cuentan en el progreso.
    - Calendario: punto en los días con pedidos, marca de **importante** y color de **preparar la víspera** en el día de recogida. Por defecto cuenta solo pedidos activos; un interruptor **"Mostrar entregados"** añade los archivados, y se recuerda en el dispositivo.
@@ -546,6 +548,6 @@ Las instrucciones para Claude Code están en [`CLAUDE.md`](../CLAUDE.md), en la 
 11. "Preparado" se calcula; no se puede marcar un encargo como preparado sin marcar sus artículos.
 
 ### Preguntas abiertas
-1. ¿El pedido necesita marcar si está **pagado**, o eso se gestiona con los tickets?
+1. ~~¿El pedido necesita marcar si está **pagado**, o eso se gestiona con los tickets?~~ **Con los tickets** (28/11/2026, durante la puerta G1): el encargo solo se entrega; lo que queda a deber se apunta como ticket al entregar.
 2. ~~¿Hace falta un **catálogo de productos** con precio por empresa a corto plazo?~~ **Sí** (27/11/2026, durante la puerta G1): catálogo sencillo con precio opcional que se propone al artículo. Ver `products`.
 3. ¿Nombre de la plataforma y dominio? Hace falta para la fase 4.

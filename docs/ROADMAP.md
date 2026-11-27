@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☐ F1-12 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -322,6 +322,17 @@ _Añadido en la puerta G1 (27/11/2026) a partir de la prueba del usuario: la pre
   7. `seed.ts`: crea el catálogo de la demo (los nombres que usa, algunos con precio) y "Borrar datos" lo borra también.
 - **No hagas:** relación del artículo con el producto; cambiar encargos ya hechos al editar un producto; mostrar precios en la lista ni en el día; nada de servidor.
 - **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el relleno de la versión 2 crea un producto por nombre (`"Entrecot"` y `" entrecot "` → uno); guardar un encargo con un nombre nuevo crea el producto y con uno existente no lo duplica; editar un producto no cambia los artículos ya guardados; un producto borrado deja de salir en las sugerencias; elegir una sugerencia con precio lo propone en el artículo; renombrar a un nombre ya usado da error. En `e2e/demo.spec.ts`, un caso: abrir Productos desde el menú, editar uno y ver el cambio en la sugerencia del formulario.
+
+### F1-12 · Entregar y dejar a deber · `sonnet`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: responde la pregunta abierta 1 de SPEC §10._
+- **Lee:** SPEC §5 punto 2 ("Entregar") y punto 4, §3 `tickets`; bloques Field y Button de `docs/design/components.css` (sin maqueta: contenido del diálogo con los bloques Field dentro de `AppDialog`, como el diálogo de nuevo ticket).
+- **Archivos:** `src/components/day/{OrderCard,DeliverDialog}.tsx` (+ test de `DeliverDialog`), `src/data/repo/orders.ts` (+ test), `src/pages/DayPage.test.tsx`, `src/i18n/{ca,es}/day.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `repo/orders.ts`: `deliverOrderWithTicket(id, { amountCents, notes })` → entrega el encargo y crea el ticket pendiente del mismo cliente en **una** `writeTx` (usa `createTicket` de `repo/tickets.ts` sin cambiarlo). Error si `amountCents` no es entero > 0.
+  2. `DeliverDialog`: se abre siempre al pulsar "Entregar". Aviso si no está preparado del todo (con `orderProgress`). Botones "Entregar", "Entregar y dejar a deber", "Volver". El segundo muestra importe (`inputMode="decimal"`, `parseMoney`, prellenado con `orderTotal` del encargo si no es `null`) y notas (prellenadas con fecha y hora de recogida en Madrid), y el botón "Entregar y crear ticket", que no hace nada con importe vacío o inválido y lo indica. Enter no envía (`SafeForm`).
+  3. `OrderCard` usa el diálogo en lugar de la confirmación actual.
+- **No hagas:** relación del ticket con el encargo; foto en este diálogo; marcar "pagado" en el encargo.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: "Entregar" pide siempre confirmación y "Volver" no cambia nada; "Entregar" entrega sin crear ticket; "Entregar y dejar a deber" con importe crea un ticket pendiente con ese importe, cliente y notas y entrega el encargo; sin importe no entrega; un encargo con precios prellena el importe; si la creación del ticket falla, el encargo no queda entregado. En `e2e/demo.spec.ts`: entregar dejando a deber y ver el ticket en Tickets.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).
