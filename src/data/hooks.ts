@@ -6,6 +6,7 @@ import { useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { nameKey } from '@shared/nameKey'
 import { madridDay, needsPrepAhead } from '@shared/progress'
+import { madridDayRangeUtc } from '@/lib/dates'
 import type {
   Customer,
   Measure,
@@ -419,6 +420,61 @@ export async function queryCustomerTickets(
     .sort((a, b) => b.created.localeCompare(a.created))
 }
 
+export type PaidTicketRow = {
+  ticket: Ticket
+  customer: Customer | null
+}
+
+export type PaidTicketFilter = {
+  /** Substring of the customer's nameKey. */
+  text?: string
+  /** Inclusive Madrid days ("YYYY-MM-DD") matched against `paidAt`. */
+  from?: string
+  to?: string
+}
+
+/**
+ * Paid, non-deleted tickets. `text` is matched against the customer's nameKey;
+ * `from`/`to` are inclusive Madrid days of `paidAt` (a payment at 00:30 Madrid
+ * counts on its own day). Newest payment first.
+ */
+export async function queryPaidTickets(
+  db: PedidatorDb,
+  filter: PaidTicketFilter = {},
+): Promise<PaidTicketRow[]> {
+  const key = nameKey(filter.text ?? '')
+  const hasRange = Boolean(filter.from || filter.to)
+  const fromMs = filter.from
+    ? Date.parse(madridDayRangeUtc(filter.from).from)
+    : Number.NEGATIVE_INFINITY
+  const toMs = filter.to
+    ? Date.parse(madridDayRangeUtc(filter.to).to)
+    : Number.POSITIVE_INFINITY
+  // Booleans are not valid IndexedDB keys, so `paid` is filtered, not queried.
+  const tickets = (await db.tickets.filter((t) => t.paid && !t.deleted).toArray())
+    .filter((t) => {
+      if (!hasRange) return true
+      if (!t.paidAt) return false
+      const ms = Date.parse(t.paidAt)
+      return ms >= fromMs && ms < toMs
+    })
+  const customers = await customersById(
+    db,
+    tickets.map((t) => t.customer),
+  )
+  return tickets
+    .map((ticket) => ({
+      ticket,
+      customer: customers.get(ticket.customer) ?? null,
+    }))
+    .filter((row) => !key || (row.customer?.nameKey ?? '').includes(key))
+    .sort(
+      (a, b) =>
+        (b.ticket.paidAt ?? '').localeCompare(a.ticket.paidAt ?? '') ||
+        a.ticket.id.localeCompare(b.ticket.id),
+    )
+}
+
 // ---- hooks -------------------------------------------------------------------
 
 /** Current session (db + context); re-renders when it starts, changes company or closes. */
@@ -500,3 +556,9 @@ export const useCustomer = (id: string | undefined) =>
 
 export const useCustomerTickets = (customerId: string) =>
   useDbQuery((db) => queryCustomerTickets(db, customerId), [customerId])
+
+export const usePaidTickets = (filter: PaidTicketFilter) =>
+  useDbQuery(
+    (db) => queryPaidTickets(db, filter),
+    [filter.text, filter.from, filter.to],
+  )

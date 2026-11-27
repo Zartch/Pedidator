@@ -180,6 +180,32 @@ test('crear un ticket i marcar-lo com a pagat', async ({ page }) => {
   await expect(page.getByText('No hi ha tickets pendents')).toBeVisible()
 })
 
+test('un ticket pagat es veu a Pagats i torna a pendent', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Tickets' }).click()
+  await page.getByRole('button', { name: 'Nou ticket' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByLabel('Client', { exact: true }).fill('Lluís Mas')
+  await dialog.getByLabel('Import').fill('7,30')
+  await dialog.getByRole('button', { name: 'Desa', exact: true }).click()
+  await page.getByRole('button', { name: /^Marca com a pagat: Lluís Mas/ }).click()
+  await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toHaveCount(0)
+
+  await page.getByRole('tab', { name: 'Pagats' }).click()
+  await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toBeVisible()
+  await expect(page.getByTestId('paid-total')).toHaveText('7,30 €')
+
+  await page.getByRole('button', { name: 'Torna a pendent' }).click()
+  await page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Torna a pendent', exact: true })
+    .click()
+  await expect(page.getByText('No hi ha tickets pagats')).toBeVisible()
+
+  await page.getByRole('tab', { name: 'Pendents' }).click()
+  await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toBeVisible()
+})
+
 test('canviar d\'idioma tradueix la interfície', async ({ page }) => {
   await openDay(page)
   await expect(page.getByRole('link', { name: 'Nou encàrrec' })).toBeVisible()

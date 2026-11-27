@@ -33,5 +33,33 @@
     "errorCustomer": "Indica el client",
     "errorAmount": "Indica un import vàlid",
     "errorSave": "No s'ha pogut desar el ticket"
+  },
+  "tabs": {
+    "label": "Vistes de tickets",
+    "pending": "Pendents",
+    "paid": "Pagats"
+  },
+  "titlePaid": "Tickets pagats",
+  "paid": {
+    "search": {
+      "label": "Cerca per client",
+      "placeholder": "Nom del client"
+    },
+    "range": {
+      "from": "Pagats des de",
+      "to": "Pagats fins a",
+      "clear": "Totes les dates"
+    },
+    "total": "Total pagat",
+    "empty": "No hi ha tickets pagats",
+    "emptyFiltered": "No hi ha tickets pagats amb aquest filtre.",
+    "ticketDate": "Ticket del {{date}}",
+    "paidDate": "Pagat el {{date}}",
+    "back": "Torna a pendent",
+    "backTitle": "Tornar el ticket a pendent",
+    "backBody": "El ticket de {{name}} de {{amount}} tornarà a la llista de pendents.",
+    "backConfirm": "Torna a pendent",
+    "cancel": "Cancel·la",
+    "unknownCustomer": "Client desconegut"
   }
 }

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@/i18n'
 import { closeSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
-import { createTicket } from '@/data/repo/tickets'
+import { createTicket, markTicketPaid } from '@/data/repo/tickets'
 import TicketsPage from './TicketsPage'
 
 let n = 0
@@ -17,12 +17,13 @@ afterEach(async () => {
   await closeSession()
 })
 
-const renderPage = () =>
+const renderPageAt = (path: string) =>
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <TicketsPage />
     </MemoryRouter>,
   )
+const renderPage = () => renderPageAt('/tickets')
 
 describe('TicketsPage', () => {
   it('shows the centered message when there are no tickets', async () => {
@@ -76,5 +77,27 @@ describe('TicketsPage', () => {
     await screen.findByRole('heading', { name: 'Jordi Ferrer' })
     fireEvent.click(screen.getByRole('button', { name: /Marca com a pagat/ }))
     await waitFor(() => expect(screen.getByText('No hi ha tickets pendents')).toBeTruthy())
+  })
+})
+
+describe('TicketsPage paid view', () => {
+  it('switches tabs and keeps the view in the URL', async () => {
+    const c = await getOrCreateCustomerByName('Laia Roca')
+    const t = await createTicket({ customer: c.id, amountCents: 1000 })
+    await markTicketPaid(t.id)
+    renderPage()
+    await screen.findByText('No hi ha tickets pendents')
+    fireEvent.click(screen.getByRole('tab', { name: 'Pagats' }))
+    expect(await screen.findByRole('heading', { name: 'Laia Roca' })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Pagats', selected: true })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Nou ticket' })).toBeNull()
+    fireEvent.click(screen.getByRole('tab', { name: 'Pendents' }))
+    expect(await screen.findByText('No hi ha tickets pendents')).toBeTruthy()
+  })
+
+  it('opens on the paid view from ?view=paid', async () => {
+    renderPageAt('/tickets?view=paid')
+    expect(await screen.findByText('No hi ha tickets pagats')).toBeTruthy()
+    expect(screen.getByRole('tab', { name: 'Pagats', selected: true })).toBeTruthy()
   })
 })

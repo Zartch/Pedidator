@@ -9,6 +9,7 @@ import {
   queryDayOrders,
   queryMonthMarks,
   queryOrderDetail,
+  queryPaidTickets,
   queryPendingTickets,
   queryPrepAheadItems,
   querySuggestCustomers,
@@ -328,5 +329,63 @@ describe('archive and counts', () => {
     await markTicketPaid(t1.id)
     const r = await queryCustomerTickets(db(), a.id)
     expect(r.map((t) => t.id)).toEqual([t2.id, t1.id])
+  })
+})
+
+describe("paid tickets", () => {
+  async function paidAt(amount: number, customerId: string, at: string) {
+    const t = await createTicket({ customer: customerId, amountCents: amount })
+    await markTicketPaid(t.id)
+    await db().tickets.update(t.id, { paidAt: at })
+    return t
+  }
+
+  it("lists only paid, live tickets, newest payment first, with the customer", async () => {
+    const ana = await getOrCreateCustomerByName("Ana")
+    const zoe = await getOrCreateCustomerByName("Zoe")
+    const older = await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
+    const newer = await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
+    await createTicket({ customer: ana.id, amountCents: 999 })
+    const rows = await queryPaidTickets(db())
+    expect(rows.map((r) => r.ticket.id)).toEqual([newer.id, older.id])
+    expect(rows.map((r) => r.customer?.name)).toEqual(["Zoe", "Ana"])
+  })
+
+  it("filters by customer nameKey", async () => {
+    const ana = await getOrCreateCustomerByName("Ana Puig")
+    const zoe = await getOrCreateCustomerByName("Zoe")
+    await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
+    await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
+    const rows = await queryPaidTickets(db(), { text: "ANÀ" })
+    expect(rows.map((r) => r.customer?.name)).toEqual(["Ana Puig"])
+  })
+
+  it("filters by Madrid days: a payment at 00:30 Madrid counts on its own day", async () => {
+    const ana = await getOrCreateCustomerByName("Ana")
+    // 2026-11-17 00:30 Madrid (winter, UTC+1) is 2026-11-16T23:30Z.
+    await paidAt(100, ana.id, "2026-11-16T23:30:00.000Z")
+    // 2026-11-16 23:59 Madrid is 2026-11-16T22:59Z: still the 16th.
+    await paidAt(200, ana.id, "2026-11-16T22:59:00.000Z")
+    const day17 = await queryPaidTickets(db(), { from: "2026-11-17", to: "2026-11-17" })
+    expect(day17.map((r) => r.ticket.amountCents)).toEqual([100])
+    const day16 = await queryPaidTickets(db(), { from: "2026-11-16", to: "2026-11-16" })
+    expect(day16.map((r) => r.ticket.amountCents)).toEqual([200])
+  })
+
+  it("the range is inclusive on both ends", async () => {
+    const ana = await getOrCreateCustomerByName("Ana")
+    await paidAt(1, ana.id, "2026-11-10T11:00:00.000Z")
+    await paidAt(2, ana.id, "2026-11-12T11:00:00.000Z")
+    await paidAt(3, ana.id, "2026-11-13T11:00:00.000Z")
+    const rows = await queryPaidTickets(db(), { from: "2026-11-10", to: "2026-11-12" })
+    expect(rows.map((r) => r.ticket.amountCents).sort()).toEqual([1, 2])
+  })
+
+  it("a range leaves out tickets without a payment date", async () => {
+    const ana = await getOrCreateCustomerByName("Ana")
+    const t = await createTicket({ customer: ana.id, amountCents: 5 })
+    await db().tickets.update(t.id, { paid: true })
+    expect(await queryPaidTickets(db())).toHaveLength(1)
+    expect(await queryPaidTickets(db(), { from: "2026-11-01" })).toHaveLength(0)
   })
 })

@@ -33,5 +33,33 @@
     "errorCustomer": "Indica el cliente",
     "errorAmount": "Indica un importe válido",
     "errorSave": "No se ha podido guardar el ticket"
+  },
+  "tabs": {
+    "label": "Vistas de tickets",
+    "pending": "Pendientes",
+    "paid": "Pagados"
+  },
+  "titlePaid": "Tickets pagados",
+  "paid": {
+    "search": {
+      "label": "Buscar por cliente",
+      "placeholder": "Nombre del cliente"
+    },
+    "range": {
+      "from": "Pagados desde",
+      "to": "Pagados hasta",
+      "clear": "Todas las fechas"
+    },
+    "total": "Total pagado",
+    "empty": "No hay tickets pagados",
+    "emptyFiltered": "No hay tickets pagados con este filtro.",
+    "ticketDate": "Ticket del {{date}}",
+    "paidDate": "Pagado el {{date}}",
+    "back": "Volver a pendiente",
+    "backTitle": "Volver el ticket a pendiente",
+    "backBody": "El ticket de {{name}} de {{amount}} volverá a la lista de pendientes.",
+    "backConfirm": "Volver a pendiente",
+    "cancel": "Cancelar",
+    "unknownCustomer": "Cliente desconocido"
   }
 }
