@@ -354,3 +354,65 @@ describe('DayPage', () => {
     })
   })
 })
+
+describe('DayPage phone calendar: week strip or whole month', () => {
+  // The tablet month grid is always in the DOM (hidden by CSS on phones), so only look inside the phone slot.
+  const phone = () =>
+    document.getElementById('day-calendar-phone') as HTMLElement
+  const weekGroup = () =>
+    within(phone()).queryAllByRole('group', { name: /Setmana del/ })
+  const monthGroup = () =>
+    within(phone()).queryAllByRole('group', { name: /Calendari de/ })
+
+  it('"Veure el mes" swaps the week for the month and "Veure la setmana" swaps back', async () => {
+    renderDay()
+    const toMonth = await screen.findByRole('button', { name: 'Veure el mes' })
+    expect(toMonth.getAttribute('aria-expanded')).toBe('false')
+    expect(weekGroup().length).toBeGreaterThan(0)
+    expect(monthGroup().length).toBe(0)
+
+    fireEvent.click(toMonth)
+    const toWeek = await screen.findByRole('button', {
+      name: 'Veure la setmana',
+    })
+    expect(toWeek.getAttribute('aria-expanded')).toBe('true')
+    expect(monthGroup().length).toBeGreaterThan(0)
+    expect(weekGroup().length).toBe(0)
+
+    fireEvent.click(toWeek)
+    await screen.findByRole('button', { name: 'Veure el mes' })
+    expect(weekGroup().length).toBeGreaterThan(0)
+    expect(monthGroup().length).toBe(0)
+  })
+
+  it('the month choice is remembered on the device when the page is mounted again', async () => {
+    renderDay()
+    fireEvent.click(await screen.findByRole('button', { name: 'Veure el mes' }))
+    expect(window.localStorage.getItem('pedidator.calendarMonth')).toBe('1')
+    cleanup()
+    renderDay()
+    const toWeek = await screen.findByRole('button', {
+      name: 'Veure la setmana',
+    })
+    expect(toWeek.getAttribute('aria-expanded')).toBe('true')
+  })
+
+  it('picking a day from the month opens that day and keeps the month open', async () => {
+    renderDay()
+    fireEvent.click(await screen.findByRole('button', { name: 'Veure el mes' }))
+    const dayButton = () =>
+      within(monthGroup()[0] as HTMLElement)
+        .getAllByRole('button')
+        .find((b) => b.textContent === '15' && b.hasAttribute('aria-pressed'))
+    // Day 15 is never a neighbouring-month day, so it is unique in the grid.
+    expect(dayButton()).toBeDefined()
+    fireEvent.click(dayButton() as HTMLElement)
+
+    await waitFor(() =>
+      expect(dayButton()?.getAttribute('aria-pressed')).toBe('true'),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Veure la setmana' }),
+    ).toBeDefined()
+  })
+})

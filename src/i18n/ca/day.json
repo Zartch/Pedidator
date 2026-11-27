@@ -29,6 +29,8 @@
       "important": "important",
       "prep": "preparar la vigília"
     },
+    "showMonth": "Veure el mes",
+    "showWeek": "Veure la setmana",
     "showDelivered": "Mostra els lliurats"
   },
   "progress": {

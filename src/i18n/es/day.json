@@ -29,6 +29,8 @@
       "important": "importante",
       "prep": "preparar la víspera"
     },
+    "showMonth": "Ver mes",
+    "showWeek": "Ver semana",
     "showDelivered": "Mostrar entregados"
   },
   "progress": {

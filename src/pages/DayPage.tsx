@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
-import { Plus } from 'lucide-react'
+import { CalendarDays, Plus } from 'lucide-react'
 import { dayProgress } from '@shared/progress'
 import type { OrderItem } from '@shared/types'
 import {
@@ -12,6 +12,7 @@ import {
   usePrepAheadItems,
   type DayMarks,
 } from '@/data/hooks'
+import { Button } from '@/components/ui/Button'
 import { DayHeader } from '@/components/day/DayHeader'
 import { DayOrderList } from '@/components/day/DayOrderList'
 import { DayProgress } from '@/components/day/DayProgress'
@@ -33,19 +34,20 @@ import {
 import { cn } from '@/lib/utils'
 
 const SHOW_DELIVERED_KEY = 'pedidator.showDelivered'
+const PHONE_MONTH_KEY = 'pedidator.calendarMonth'
 
-/** "Show delivered" is remembered on the device; off by default (the calendar counts only active orders); storage can be blocked, then it stays off. */
-function readShowDelivered(): boolean {
+/** Device-remembered switches; off by default; storage can be blocked, then the choice lasts until the page reloads. */
+function readFlag(key: string): boolean {
   try {
-    return window.localStorage.getItem(SHOW_DELIVERED_KEY) === '1'
+    return window.localStorage.getItem(key) === '1'
   } catch {
     return false
   }
 }
 
-function writeShowDelivered(value: boolean): void {
+function writeFlag(key: string, value: boolean): void {
   try {
-    window.localStorage.setItem(SHOW_DELIVERED_KEY, value ? '1' : '0')
+    window.localStorage.setItem(key, value ? '1' : '0')
   } catch {
     // Storage blocked: the choice lasts until the page reloads.
   }
@@ -65,7 +67,11 @@ export default function DayPage() {
   const isToday = day === today
   const month = monthOf(day)
 
-  const [showDelivered, setShowDelivered] = useState(readShowDelivered)
+  const [showDelivered, setShowDelivered] = useState(() =>
+    readFlag(SHOW_DELIVERED_KEY),
+  )
+  // Phones show the week strip; this switches them to the whole month. Tablets always show the month.
+  const [phoneMonth, setPhoneMonth] = useState(() => readFlag(PHONE_MONTH_KEY))
 
   const orders = useDayOrders(day)
   const prepAhead = usePrepAheadItems(day)
@@ -109,8 +115,38 @@ export default function DayPage() {
           onSelect={select}
           onToday={() => select(today)}
         />
-        <div className="tablet:hidden">
-          <WeekStrip day={day} today={today} marks={marks} onSelect={select} />
+        <div className="flex flex-col gap-2 tablet:hidden">
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              aria-expanded={phoneMonth}
+              aria-controls="day-calendar-phone"
+              onClick={() => {
+                writeFlag(PHONE_MONTH_KEY, !phoneMonth)
+                setPhoneMonth(!phoneMonth)
+              }}
+            >
+              <CalendarDays className="size-5" aria-hidden="true" />
+              {phoneMonth ? t('calendar.showWeek') : t('calendar.showMonth')}
+            </Button>
+          </div>
+          <div id="day-calendar-phone">
+            {phoneMonth ? (
+              <MonthCalendar
+                day={day}
+                today={today}
+                marks={marks}
+                onSelect={select}
+              />
+            ) : (
+              <WeekStrip
+                day={day}
+                today={today}
+                marks={marks}
+                onSelect={select}
+              />
+            )}
+          </div>
         </div>
         <div className="hidden tablet:block">
           <MonthCalendar
@@ -165,7 +201,7 @@ export default function DayPage() {
             role="switch"
             aria-checked={showDelivered}
             onClick={() => {
-              writeShowDelivered(!showDelivered)
+              writeFlag(SHOW_DELIVERED_KEY, !showDelivered)
               setShowDelivered(!showDelivered)
             }}
             className="flex min-h-(--touch-min) cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left font-medium text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
