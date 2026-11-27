@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☑ F1-14 · ☑ F1-15 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☑ F1-14 · ☑ F1-15 · ☐ F1-16 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -365,6 +365,20 @@ _Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
 - **Tareas:** en móvil (por debajo de `bp-tablet`), un botón junto a la semana ("Ver mes" / "Ver semana", con icono y `aria-expanded`) cambia entre `WeekStrip` y `MonthCalendar` con las mismas marcas y la misma selección de día; la elección se recuerda en el dispositivo (`localStorage`, como "Mostrar entregados"). Elegir un día en el mes lo abre y deja el mes desplegado. En tablet no cambia nada.
 - **No hagas:** cambiar las marcas ni cómo se calculan; tocar la ficha del cliente (es F1-14).
 - **Hecho cuando:** `npm run check` pasa, con tests de: el botón cambia de semana a mes y vuelta; la elección se recuerda al volver a montar la página; elegir un día desde el mes navega a ese día.
+
+### F1-16 · Calendario que se arrastra · `sonnet`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 punto 2 (calendario); bloque Calendar de `docs/design/components.css`; maquetas `docs/design/screens/Main.dc.html` y `DiaTablet.dc.html`.
+- **Archivos:** `src/components/day/{WeekStrip,MonthCalendar}.tsx`, `src/pages/DayPage.tsx` (+ test), `src/lib/dates.ts` (+ test), `src/data/hooks.ts` (+ test), `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `dates.ts` (funciones puras): `weeksAround(day, n)` (lunes de las `n` semanas antes y después de la del día), `monthsAround(month, n)`, `monthOfWeek(weekMonday, selectedDay)` (el mes del día elegido si está en esa semana; si no, el del jueves de la semana) y `weekOfMonth(month, selectedDay)` (lunes de la semana del día elegido si está en ese mes; si no, de la semana del día 1).
+  2. `hooks.ts`: `queryRangeMarks(db, fromDay, toDay, options)` / `useRangeMarks` con las mismas marcas y opciones que `queryMonthMarks` (que se queda como está o pasa a usarla).
+  3. `WeekStrip`: contenedor con desplazamiento horizontal y `scroll-snap` (cada semana ocupa todo el ancho), ventana de 26 semanas a cada lado de la del día elegido. Al montar y cuando cambia el día elegido, se coloca sin animación en su semana. Arrastrar solo cambia la semana visible (rótulo encima "1 – 7 de diciembre"), no el día ni la URL. Tocar un día llama a `onSelect`. Avisa de la semana visible a la página (`onVisibleWeekChange`).
+  4. `MonthCalendar`: lo mismo en vertical, por meses (título de cada mes, ventana de 12 meses a cada lado, el contenedor mide un mes de alto), en móvil y en tablet. Avisa del mes visible (`onVisibleMonthChange`).
+  5. `DayPage`: pide las marcas de toda la ventana con `useRangeMarks`; "Ver mes" abre `monthOfWeek(semana visible, día)` y "Ver semana" `weekOfMonth(mes visible, día)`. Los botones de anterior/siguiente día y "Hoy" siguen igual.
+  6. Sin dependencias nuevas: desplazamiento nativo con CSS `scroll-snap` (táctil en móvil y iPad; rueda o trackpad en escritorio). Accesible: los días siguen siendo botones con su etiqueta; nada de `aria-hidden` en las semanas fuera de vista que impida llegar con el teclado.
+- **No hagas:** cambiar cómo se calculan las marcas; seleccionar un día al arrastrar; tocar otras pantallas.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: las cuatro funciones de `dates.ts` (incluidas semanas que cruzan de mes y de año); `queryRangeMarks` da lo mismo que `queryMonthMarks` en un mes; la semana del día elegido está en la ventana y tocar un día de otra semana lo selecciona. En `e2e/demo.spec.ts`, con viewport de móvil: desplazar la semana (cambiando `scrollLeft`) cambia el rótulo y no la URL; "Ver mes" abre el mes de esa semana.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).

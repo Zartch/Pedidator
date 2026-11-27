@@ -366,7 +366,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 
 1. **Login.**
 2. **Día (inicio): el espacio de trabajo**
-   - Se abre en **hoy**. Arriba, el día y cómo moverse: anterior, siguiente, "Hoy" y el calendario (la semana en móvil, el mes en tablet). En móvil, un botón **despliega el mes entero** y lo vuelve a plegar; se recuerda en el dispositivo.
+   - Se abre en **hoy**. Arriba, el día y cómo moverse: anterior, siguiente, "Hoy" y el calendario (la semana en móvil, el mes en tablet). En móvil, un botón **despliega el mes entero** y lo vuelve a plegar; se recuerda en el dispositivo. **Se desplaza arrastrando** sin cambiar el día elegido: la semana (siempre de lunes a domingo) se arrastra en horizontal y encaja semana a semana; el mes se arrastra en vertical y encaja mes a mes (también en tablet). Tocar un día lo abre. "Ver mes" abre el mes de la semana que se está viendo y "Ver semana" vuelve a la semana del día elegido si está en el mes que se ve, o a la primera semana de ese mes. Al cambiar de día con las flechas, "Hoy" o la URL, el calendario se coloca en ese día.
    - **Barra de progreso**: _"3 de 8 encargos preparados"_, y debajo cuántos quedan por preparar y cuántos se han entregado.
    - **Próxima recogida**: el siguiente encargo sin entregar, con su hora y cliente, destacado.
    - **Encargos del día por hora de recogida.** Cada uno muestra hora (lo más grande), cliente, sus artículos con cantidad (`2,5 kg`, `750 g`, `6 u`) y notas, y su estado: por preparar, **preparado**, entregado. **Los artículos se marcan desde aquí**, sin abrir el encargo. Sin importes.
