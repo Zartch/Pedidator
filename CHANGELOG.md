@@ -21,3 +21,4 @@
 - F1-12: "Entregar" siempre pide confirmación y permite "Entregar y dejar a deber", que entrega el encargo y crea un ticket pendiente con el importe (prellenado con el total si hay precios) en una sola transacción.
 - F1-13: pestaña "Pagados" en Tickets con búsqueda por cliente, rango de fechas de pago, total filtrado, miniatura y "Volver a pendiente".
 - F1-14: ficha del cliente con lo pendiente de entrada, "Ver entregados"/"Ver pagados" con los 5 últimos y "Explorar" al Archivo y a Pagados filtrados por cliente; filtros del Archivo y de Pagados en la URL; miniatura de ticket común (`TicketThumb`).
+- F1-15: en móvil, botón "Ver mes"/"Ver semana" que despliega el calendario del mes entero en el espacio de trabajo del día, recordado en el dispositivo.
