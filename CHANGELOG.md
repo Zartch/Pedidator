@@ -20,3 +20,4 @@
 - F1-11: catálogo de productos (colección `products`, pantalla Productos en el menú, sugerencias del encargo desde el catálogo con precio opcional propuesto, alta automática al guardar un encargo y relleno desde los artículos existentes).
 - F1-12: "Entregar" siempre pide confirmación y permite "Entregar y dejar a deber", que entrega el encargo y crea un ticket pendiente con el importe (prellenado con el total si hay precios) en una sola transacción.
 - F1-13: pestaña "Pagados" en Tickets con búsqueda por cliente, rango de fechas de pago, total filtrado, miniatura y "Volver a pendiente".
+- F1-14: ficha del cliente con lo pendiente de entrada, "Ver entregados"/"Ver pagados" con los 5 últimos y "Explorar" al Archivo y a Pagados filtrados por cliente; filtros del Archivo y de Pagados en la URL; miniatura de ticket común (`TicketThumb`).
