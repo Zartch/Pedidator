@@ -1,4 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
+import { nameKey } from '@shared/nameKey'
+import { newId } from '@/lib/id'
 import type {
   Customer,
   Order,
@@ -82,6 +84,35 @@ export function openCompanyDb(companyId: string): PedidatorDb {
     blobs: 'id, [collection+recordId]',
     meta: 'key',
   })
-  db.version(2).stores({ products: 'id, nameKey' })
+  db.version(2)
+    .stores({ products: 'id, nameKey' })
+    .upgrade(async (tx) => {
+      // Local backfill (not through mutate/outbox): one product per distinct
+      // nameKey of the live items, taking the values of the latest one.
+      const latest = new Map<string, OrderItem>()
+      await tx
+        .table<OrderItem>('order_items')
+        .filter((i) => !i.deleted && nameKey(i.name) !== '')
+        .each((i) => {
+          const k = nameKey(i.name)
+          const prev = latest.get(k)
+          if (!prev || i.created > prev.created) latest.set(k, i)
+        })
+      const now = new Date().toISOString()
+      const products: Product[] = [...latest.entries()].map(([k, i]) => ({
+        id: newId(),
+        company: companyId,
+        version: 0,
+        updatedBy: '',
+        deleted: false,
+        created: now,
+        updated: now,
+        name: i.name.trim().replace(/\s+/g, ' '),
+        nameKey: k,
+        measure: i.measure,
+        prepDayBefore: i.prepDayBefore,
+      }))
+      await tx.table<Product>('products').bulkAdd(products)
+    })
   return db
 }

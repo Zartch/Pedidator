@@ -63,7 +63,12 @@ describe('order repo', () => {
     for (const i of items)
       expect((await db.order_items.get(i.id))?.deleted).toBe(true)
     const ops = await db.outbox.toArray()
-    expect(ops.map((o) => o.collection)).toEqual(['customers'])
+    // The customer and the two catalogue products created along with the order.
+    expect(ops.map((o) => o.collection).sort()).toEqual([
+      'customers',
+      'products',
+      'products',
+    ])
   })
 
   it('deleteOrder of an uploaded order queues one delete for the order only', async () => {

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { CalendarDays, Receipt, Users } from 'lucide-react'
+import { CalendarDays, Package, Receipt, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,12 @@ const ITEMS: Item[] = [
     labelKey: 'nav.customers',
     icon: Users,
     isActive: (path) => path.startsWith('/customers'),
+  },
+  {
+    to: '/products',
+    labelKey: 'nav.products',
+    icon: Package,
+    isActive: (path) => path.startsWith('/products'),
   },
 ]
 

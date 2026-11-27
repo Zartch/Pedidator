@@ -6,7 +6,14 @@ import { useSyncExternalStore } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { nameKey } from '@shared/nameKey'
 import { madridDay, needsPrepAhead } from '@shared/progress'
-import type { Customer, Measure, Order, OrderItem, Ticket } from '@shared/types'
+import type {
+  Customer,
+  Measure,
+  Order,
+  OrderItem,
+  Product,
+  Ticket,
+} from '@shared/types'
 import type { PedidatorDb } from './db'
 import { getSession, subscribeSession } from './session'
 
@@ -39,7 +46,7 @@ export type ItemSuggestion = {
   name: string
   measure: Measure
   prepDayBefore: boolean
-  lastUsed: string
+  unitPriceCents: number | null
 }
 
 // ---- date helpers (private) -------------------------------------------------
@@ -274,8 +281,8 @@ export async function querySuggestCustomers(
 }
 
 /**
- * Item-name suggestions, one per distinct name. The most recently created item
- * with that name supplies `measure`, `prepDayBefore` and `lastUsed`.
+ * Item-name suggestions from the catalogue only (live products whose name
+ * contains `text`); prefix matches first, then by name.
  */
 export async function querySuggestItems(
   db: PedidatorDb,
@@ -283,27 +290,37 @@ export async function querySuggestItems(
   limit = 8,
 ): Promise<ItemSuggestion[]> {
   const key = nameKey(text)
-  const latest = new Map<string, OrderItem>()
-  await db.order_items
-    .filter((i) => !i.deleted && nameKey(i.name).includes(key))
-    .each((i) => {
-      const k = nameKey(i.name)
-      const prev = latest.get(k)
-      if (!prev || i.created > prev.created) latest.set(k, i)
-    })
-  return [...latest.entries()]
-    .sort(([ka, a], [kb, b]) => {
-      const pa = ka.startsWith(key) ? 0 : 1
-      const pb = kb.startsWith(key) ? 0 : 1
-      return pa - pb || b.created.localeCompare(a.created)
+  const all = await db.products
+    .filter((p) => !p.deleted && p.nameKey.includes(key))
+    .toArray()
+  return all
+    .sort((a, b) => {
+      const pa = a.nameKey.startsWith(key) ? 0 : 1
+      const pb = b.nameKey.startsWith(key) ? 0 : 1
+      return pa - pb || a.nameKey.localeCompare(b.nameKey)
     })
     .slice(0, limit)
-    .map(([, i]) => ({
-      name: i.name,
-      measure: i.measure,
-      prepDayBefore: i.prepDayBefore,
-      lastUsed: i.created,
+    .map((p) => ({
+      name: p.name,
+      measure: p.measure,
+      prepDayBefore: p.prepDayBefore,
+      unitPriceCents: p.unitPriceCents ?? null,
     }))
+}
+
+/** All live products by `nameKey`. */
+export async function queryProducts(db: PedidatorDb): Promise<Product[]> {
+  const all = await db.products.filter((p) => !p.deleted).toArray()
+  return all.sort((a, b) => a.nameKey.localeCompare(b.nameKey))
+}
+
+/** One live product; null if missing or deleted. */
+export async function queryProduct(
+  db: PedidatorDb,
+  id: string,
+): Promise<Product | null> {
+  const product = await db.products.get(id)
+  return !product || product.deleted ? null : product
 }
 
 /** All live customers by name. */
@@ -450,6 +467,15 @@ export const useCustomerSuggestions = (text: string, limit = 8) =>
 
 export const useItemSuggestions = (text: string, limit = 8) =>
   useDbQuery((db) => querySuggestItems(db, text, limit), [text, limit])
+
+export const useProducts = () => useDbQuery(queryProducts, [])
+
+/** undefined = loading, null = not found. */
+export const useProduct = (id: string | undefined) =>
+  useDbQuery(
+    (db) => (id ? queryProduct(db, id) : Promise.resolve(null)),
+    [id],
+  )
 
 export const useCustomers = () => useDbQuery(queryCustomers, [])
 

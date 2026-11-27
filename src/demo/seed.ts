@@ -1,11 +1,17 @@
 import { createTicket, deleteTicket, markTicketPaid } from '@/data/repo/tickets'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import type { ItemInput } from '@/data/repo/orderItems'
+import {
+  createProduct,
+  deleteProduct,
+  findProductByName,
+} from '@/data/repo/products'
 import { createOrder, deleteOrder, deliverOrder } from '@/data/repo/orders'
 import {
   queryCustomerOrders,
   queryCustomerTickets,
   queryCustomers,
+  queryProducts,
 } from '@/data/hooks'
 import { requireSession } from '@/data/session'
 import { addDays, madridDateTimeToUtcIso, monthBounds, monthOf, todayMadrid } from '@/lib/dates'
@@ -165,6 +171,34 @@ const ORDERS: OrderPlan[] = [
   },
 ]
 
+type ProductPlan = {
+  name: string
+  measure: 'unit' | 'weight'
+  prepDayBefore?: boolean
+  unitPriceCents?: number
+}
+
+// The catalogue of the demo: every name the orders use; some carry a price.
+const PRODUCTS: ProductPlan[] = [
+  { name: 'Pollastre de corral', measure: 'unit', unitPriceCents: 790 },
+  { name: 'Costella de porc', measure: 'weight', unitPriceCents: 1050 },
+  { name: 'Llonganissa', measure: 'weight' },
+  { name: 'Xoriço', measure: 'unit' },
+  { name: 'Entrecot', measure: 'weight', unitPriceCents: 2490 },
+  { name: 'Vedella per guisar', measure: 'weight', unitPriceCents: 1390 },
+  { name: 'Pernil dessossat', measure: 'weight' },
+  { name: 'Botifarra', measure: 'unit' },
+  { name: 'Fricandó de vedella', measure: 'weight', prepDayBefore: true },
+  { name: 'Costelles adobades', measure: 'weight', prepDayBefore: true },
+  { name: 'Llom adobat', measure: 'weight' },
+  { name: 'Carn picada', measure: 'weight', unitPriceCents: 990 },
+  { name: 'Hamburgueses', measure: 'unit', prepDayBefore: true },
+  { name: 'Salsitxes', measure: 'unit' },
+  { name: 'Ànec', measure: 'weight' },
+  { name: 'Xai', measure: 'weight', unitPriceCents: 1890 },
+  { name: 'Bistec de vedella', measure: 'weight' },
+]
+
 type TicketPlan = { customer: string; amountCents: number; notes?: string; paid?: boolean }
 
 const TICKETS: TicketPlan[] = [
@@ -182,6 +216,15 @@ const TICKETS: TicketPlan[] = [
 export async function loadDemoData(now: Date = new Date()): Promise<void> {
   const today = todayMadrid(now)
   const { first, last } = monthBounds(monthOf(today))
+  for (const product of PRODUCTS) {
+    if (await findProductByName(product.name)) continue
+    await createProduct({
+      name: product.name,
+      measure: product.measure,
+      prepDayBefore: product.prepDayBefore ?? false,
+      unitPriceCents: product.unitPriceCents,
+    })
+  }
   for (const plan of ORDERS) {
     const day = addDays(today, plan.offset)
     const isTodayOrTomorrow = plan.offset === 0 || plan.offset === 1
@@ -210,8 +253,8 @@ export async function loadDemoData(now: Date = new Date()): Promise<void> {
 }
 
 /**
- * Logically deletes every order and ticket of the demo. Customers stay: the data
- * layer has no customer delete yet.
+ * Logically deletes every order, ticket and product of the demo. Customers stay:
+ * the data layer has no customer delete yet.
  */
 export async function clearDemoData(): Promise<void> {
   const { db } = requireSession()
@@ -222,5 +265,8 @@ export async function clearDemoData(): Promise<void> {
     for (const ticket of await queryCustomerTickets(db, customer.id)) {
       await deleteTicket(ticket.id)
     }
+  }
+  for (const product of await queryProducts(db)) {
+    await deleteProduct(product.id)
   }
 }

@@ -49,6 +49,11 @@ export function emptyDraft(): ItemDraft {
   }
 }
 
+/** Integer cents as editable text, e.g. 2490 -> "24,90". */
+export function centsToText(cents: number): string {
+  return `${Math.floor(cents / 100)},${String(cents % 100).padStart(2, '0')}`
+}
+
 export function draftFromItem(item: OrderItem): ItemDraft {
   const ordered = weightToField(item.orderedGrams)
   const real = weightToField(item.weightGrams)
@@ -63,10 +68,7 @@ export function draftFromItem(item: OrderItem): ItemDraft {
     notes: item.notes ?? '',
     prepDayBefore: item.prepDayBefore,
     done: item.done,
-    priceText:
-      item.unitPriceCents == null
-        ? ''
-        : `${Math.floor(item.unitPriceCents / 100)},${String(item.unitPriceCents % 100).padStart(2, '0')}`,
+    priceText: item.unitPriceCents == null ? '' : centsToText(item.unitPriceCents),
     realText: real.text,
     realUnit: real.unit,
   }
@@ -192,7 +194,15 @@ export function ItemEditorRow({
                     className="min-h-(--touch-min) w-full cursor-pointer border-0 bg-surface-raised px-3 text-left text-ink"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() =>
-                      set({ name: s.name, measure: s.measure, prepDayBefore: s.prepDayBefore })
+                      set({
+                        name: s.name,
+                        measure: s.measure,
+                        prepDayBefore: s.prepDayBefore,
+                        // The catalogue price is only a proposal: never overwrite one typed by hand.
+                        ...(s.unitPriceCents != null && draft.priceText.trim() === ''
+                          ? { priceText: centsToText(s.unitPriceCents) }
+                          : {}),
+                      })
                     }
                   >
                     {s.name}

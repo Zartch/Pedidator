@@ -13,10 +13,20 @@ type Props = {
   realUnit: Unit
   onPrice: (text: string) => void
   onReal: (text: string, unit: Unit) => void
+  /** The catalogue has no real weight, only the price. */
+  hideRealWeight?: boolean
 }
 
 /** Collapsed "Price" section of an item: price (per unit or per kilo) and real weight. */
-export function PriceDisclosure({ measure, priceText, realText, realUnit, onPrice, onReal }: Props) {
+export function PriceDisclosure({
+  measure,
+  priceText,
+  realText,
+  realUnit,
+  onPrice,
+  onReal,
+  hideRealWeight = false,
+}: Props) {
   const { t } = useTranslation('orderForm')
   const [open, setOpen] = useState(() => priceText.trim() !== '' || realText.trim() !== '')
   const id = useId()
@@ -65,7 +75,7 @@ export function PriceDisclosure({ measure, priceText, realText, realUnit, onPric
               </span>
             )}
           </div>
-          {measure === 'weight' && (
+          {measure === 'weight' && !hideRealWeight && (
             <WeightField
               label={t('price.realWeight')}
               text={realText}

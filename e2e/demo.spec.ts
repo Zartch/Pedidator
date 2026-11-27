@@ -194,3 +194,28 @@ test('les dades segueixen després de recarregar sense connexió', async ({
   await expect(card).toBeVisible()
   await expect(card.getByText('Llom')).toBeVisible()
 })
+
+test('editar un producte del catàleg es veu als suggeriments del formulari', async ({
+  page,
+}) => {
+  await openDay(page)
+  // Saving an order fills the catalogue by itself.
+  await newOrder(page, { customer: 'Marta Vidal', day: madridDay(), time: '09:00' })
+  await itemRow(page, 1).getByLabel('Article', { exact: true }).fill('Entrecot')
+  await save(page)
+  await expect(page.getByRole('article').filter({ hasText: 'Marta Vidal' })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Productes' }).click()
+  await expect(page.getByRole('heading', { name: 'Productes' })).toBeVisible()
+  await page.getByRole('link', { name: /Entrecot/ }).click()
+  await page.getByLabel('Nom', { exact: true }).fill('Entrecot de vedella')
+  await page.getByRole('button', { name: 'Pes', exact: true }).click()
+  await page.getByRole('button', { name: 'Desa', exact: true }).click()
+  await expect(page.getByRole('link', { name: /Entrecot de vedella/ })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Dia', exact: true }).click()
+  await page.getByRole('link', { name: 'Nou encàrrec' }).click()
+  const name = itemRow(page, 1).getByLabel('Article', { exact: true })
+  await name.fill('entre')
+  await expect(page.getByRole('button', { name: 'Entrecot de vedella' })).toBeVisible()
+})

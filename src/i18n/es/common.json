@@ -7,6 +7,7 @@
     "day": "Día",
     "tickets": "Tickets",
     "customers": "Clientes",
+    "products": "Productos",
     "archive": "Archivo"
   },
   "language": {
@@ -33,7 +34,7 @@
     "load": "Cargar datos de ejemplo",
     "clear": "Borrar datos",
     "clearTitle": "¿Borrar los datos de la demo?",
-    "clearBody": "Se borran todos los encargos y tickets de este dispositivo. Los clientes se mantienen.",
+    "clearBody": "Se borran todos los encargos, tickets y productos de este dispositivo. Los clientes se mantienen.",
     "confirmClear": "Borrar",
     "cancel": "Cancelar",
     "error": "No se pudo completar la acción."

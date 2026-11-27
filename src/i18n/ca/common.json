@@ -7,6 +7,7 @@
     "day": "Dia",
     "tickets": "Tickets",
     "customers": "Clients",
+    "products": "Productes",
     "archive": "Arxiu"
   },
   "language": {
@@ -33,7 +34,7 @@
     "load": "Carrega dades d'exemple",
     "clear": "Esborra les dades",
     "clearTitle": "Esborrar les dades de la demo?",
-    "clearBody": "S'esborren tots els encàrrecs i tickets d'aquest dispositiu. Els clients es mantenen.",
+    "clearBody": "S'esborren tots els encàrrecs, tickets i productes d'aquest dispositiu. Els clients es mantenen.",
     "confirmClear": "Esborra",
     "cancel": "Cancel·la",
     "error": "No s'ha pogut completar l'acció."

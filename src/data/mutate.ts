@@ -53,7 +53,14 @@ function serverPatch(fields: Record<string, unknown>): Record<string, unknown> {
 }
 
 export function writeTables(db: PedidatorDb) {
-  return [db.customers, db.orders, db.order_items, db.tickets, db.outbox]
+  return [
+    db.customers,
+    db.products,
+    db.orders,
+    db.order_items,
+    db.tickets,
+    db.outbox,
+  ]
 }
 
 /** Runs `fn` in one read-write transaction over every syncable table and the outbox. */

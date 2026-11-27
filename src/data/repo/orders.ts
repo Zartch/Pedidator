@@ -7,6 +7,7 @@ import {
   updateItem,
   type ItemInput,
 } from './orderItems'
+import { ensureProductsForItems } from './products'
 
 export type OrderFields = {
   customer: string
@@ -41,6 +42,7 @@ export async function createOrder(
     const created: OrderItem[] = []
     for (const [i, input] of items.entries())
       created.push(await addItem(order.id, input, i))
+    await ensureProductsForItems(items)
     return { order, items: created }
   })
 }
@@ -78,6 +80,7 @@ export async function saveOrder(
         await updateItem(itemId, { ...input, position: pos })
       else await addItem(id, input, pos)
     }
+    await ensureProductsForItems(items)
   })
 }
 

@@ -12,9 +12,11 @@ import {
   queryPendingTickets,
   queryPrepAheadItems,
   querySuggestCustomers,
+  queryProducts,
   querySuggestItems,
 } from './hooks'
 import { getOrCreateCustomerByName } from './repo/customers'
+import { createProduct, deleteProduct } from './repo/products'
 import { setItemDone } from './repo/orderItems'
 import { cancelOrder, createOrder, deliverOrder } from './repo/orders'
 import { createTicket, markTicketPaid } from './repo/tickets'
@@ -189,26 +191,50 @@ describe('suggestions', () => {
     expect(r.map((c) => c.name)).toEqual(['Maria Lopez', 'Ana Maria'])
   })
 
-  it('item suggestions: latest use per name carries measure and prepDayBefore', async () => {
+  it('item suggestions come only from the catalogue, with the price', async () => {
+    await createProduct({
+      name: 'Entrecot',
+      measure: 'weight',
+      prepDayBefore: true,
+      unitPriceCents: 2490,
+    })
+    await createProduct({ name: 'Pollo', measure: 'unit', prepDayBefore: false })
+    expect(await querySuggestItems(db(), 'ENTRÉ')).toEqual([
+      {
+        name: 'Entrecot',
+        measure: 'weight',
+        prepDayBefore: true,
+        unitPriceCents: 2490,
+      },
+    ])
+    expect(
+      (await querySuggestItems(db(), '')).map((s) => s.name).sort(),
+    ).toEqual(['Entrecot', 'Pollo'])
+  })
+
+  it('a deleted product no longer shows in the suggestions', async () => {
+    const p = await createProduct({
+      name: 'Entrecot',
+      measure: 'unit',
+      prepDayBefore: false,
+    })
+    await deleteProduct(p.id)
+    expect(await querySuggestItems(db(), 'entre')).toEqual([])
+    expect(await queryProducts(db())).toEqual([])
+  })
+
+  it('items without a catalogue entry are not suggested', async () => {
     const c = await getOrCreateCustomerByName('Ana')
     await createOrder(
       { customer: c.id, pickupAt: '2026-12-17T10:00:00.000Z' },
-      [{ name: 'Entrecot', measure: 'unit', prepDayBefore: false }],
+      [{ name: 'Costilla', measure: 'unit' }],
     )
-    await new Promise((r) => setTimeout(r, 5))
-    await createOrder(
-      { customer: c.id, pickupAt: '2026-12-18T10:00:00.000Z' },
-      [
-        { name: 'entrecot ', measure: 'weight', prepDayBefore: true },
-        { name: 'Pollo', measure: 'unit' },
-      ],
-    )
-    const r = await querySuggestItems(db(), 'entre')
-    expect(r).toHaveLength(1)
-    expect(r[0]).toMatchObject({ measure: 'weight', prepDayBefore: true })
-    expect(
-      (await querySuggestItems(db(), '')).map((s) => s.name).sort(),
-    ).toEqual(['Pollo', 'entrecot'])
+    expect((await querySuggestItems(db(), 'cost')).map((s) => s.name)).toEqual([
+      'Costilla',
+    ])
+    // Wiping the catalogue leaves the item orphaned: nothing to suggest.
+    await db().products.clear()
+    expect(await querySuggestItems(db(), 'cost')).toEqual([])
   })
 })
 

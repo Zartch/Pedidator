@@ -13,6 +13,7 @@ import { closeSession, requireSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import { createOrder } from '@/data/repo/orders'
 import { getOrderItems } from '@/data/repo/orderItems'
+import { createProduct } from '@/data/repo/products'
 import { madridDateTimeToUtcIso, todayMadrid } from '@/lib/dates'
 import OrderFormPage from './OrderFormPage'
 
@@ -106,6 +107,32 @@ describe('OrderFormPage', () => {
     renderAt('/orders/new')
     await fillCustomerAndItem('Bar', 'Butifarra')
     expect(screen.queryByTestId('order-total')).toBeNull()
+  })
+
+  it('choosing a catalogue suggestion proposes its measure, prep and price', async () => {
+    await createProduct({
+      name: 'Entrecot',
+      measure: 'weight',
+      prepDayBefore: true,
+      unitPriceCents: 2490,
+    })
+    renderAt('/orders/new')
+    fireEvent.change(await screen.findByLabelText('Client'), {
+      target: { value: 'Bar' },
+    })
+    const name = screen.getByLabelText('Article')
+    fireEvent.focus(name)
+    fireEvent.change(name, { target: { value: 'entre' } })
+    fireEvent.click(await screen.findByRole('button', { name: 'Entrecot' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Pes' }).getAttribute('aria-pressed'),
+    ).toBe('true')
+    expect(
+      screen.getByRole('switch', { name: 'Preparar el dia abans' }).getAttribute('aria-checked'),
+    ).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Preu (opcional)' }))
+    expect((screen.getByLabelText('Preu per quilo') as HTMLInputElement).value).toBe('24,90')
   })
 
   it('shows an estimated total with "≈" for a priced weight item without real weight', async () => {
