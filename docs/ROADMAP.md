@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☐ F1-13 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -333,6 +333,17 @@ _Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: respon
   3. `OrderCard` usa el diálogo en lugar de la confirmación actual.
 - **No hagas:** relación del ticket con el encargo; foto en este diálogo; marcar "pagado" en el encargo.
 - **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: "Entregar" pide siempre confirmación y "Volver" no cambia nada; "Entregar" entrega sin crear ticket; "Entregar y dejar a deber" con importe crea un ticket pendiente con ese importe, cliente y notas y entrega el encargo; sin importe no entrega; un encargo con precios prellena el importe; si la creación del ticket falla, el encargo no queda entregado. En `e2e/demo.spec.ts`: entregar dejando a deber y ver el ticket en Tickets.
+
+### F1-13 · Tickets pagados · `haiku`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: consultar los tickets ya pagados._
+- **Lee:** SPEC §5 punto 4 entero, §3 `tickets`; `docs/design/README.md` y la maqueta `docs/design/screens/Tickets.dc.html` (la pestaña Pagados no tiene maqueta propia: misma tarjeta de ticket y el buscador y filtros de `src/pages/ArchivePage.tsx`).
+- **Archivos:** `src/pages/TicketsPage.tsx` (+ test), `src/components/tickets/PaidTicketList.tsx` (+ test), `src/data/hooks.ts` (+ test), `src/i18n/{ca,es}/tickets.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `hooks.ts`: `queryPaidTickets(db, { text, from, to })` y `usePaidTickets(...)`: tickets no borrados con `paid`, filtro por `nameKey` del cliente que contenga el texto y por `paidAt` dentro del rango de días de Madrid (usa `src/lib/dates.ts`), orden por `paidAt` descendente, con el nombre del cliente.
+  2. `TicketsPage`: pestañas "Pendientes" / "Pagados" con `?view=paid` en la URL. La vista de pendientes no cambia.
+  3. `PaidTicketList`: buscador, fechas "desde"/"hasta", total de lo filtrado (`formatMoney`), tarjetas con cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre `PhotoViewer`); "Volver a pendiente" con confirmación en `AppDialog` usando `markTicketUnpaid` de `repo/tickets.ts`; mensaje centrado si no hay ninguno.
+- **No hagas:** cambiar `repo/tickets.ts`, el diálogo de nuevo ticket ni la vista de pendientes.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el filtro por cliente y por fechas (un pago a las 00:30 de Madrid cuenta en ese día); el orden por `paidAt`; el total filtrado; "Volver a pendiente" lo devuelve a la pestaña Pendientes. En `e2e/demo.spec.ts`: marcar un ticket pagado, verlo en Pagados y devolverlo a pendiente.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).
