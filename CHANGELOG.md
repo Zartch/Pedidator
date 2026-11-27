@@ -19,3 +19,4 @@
 - G1: correcciones del code review de la fase 1 (entregados siempre visibles y recuperables, diálogos, ticket con foto atómico, validación del formulario de encargo, limpieza de fotos, "no encontrado") y base de GitHub Pages según el nombre del repositorio.
 - F1-11: catálogo de productos (colección `products`, pantalla Productos en el menú, sugerencias del encargo desde el catálogo con precio opcional propuesto, alta automática al guardar un encargo y relleno desde los artículos existentes).
 - F1-12: "Entregar" siempre pide confirmación y permite "Entregar y dejar a deber", que entrega el encargo y crea un ticket pendiente con el importe (prellenado con el total si hay precios) en una sola transacción.
+- F1-13: pestaña "Pagados" en Tickets con búsqueda por cliente, rango de fechas de pago, total filtrado, miniatura y "Volver a pendiente".
