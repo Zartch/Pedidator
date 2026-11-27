@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@/i18n'
 import CustomerPage from './CustomerPage'
 import { getCustomer, getOrCreateCustomerByName } from '@/data/repo/customers'
-import { createOrder, deliverOrder } from '@/data/repo/orders'
+import { cancelOrder, createOrder, deliverOrder } from '@/data/repo/orders'
 import { createTicket, markTicketPaid } from '@/data/repo/tickets'
 import { closeSession, requireSession, startSession } from '@/data/session'
 
@@ -136,6 +136,20 @@ describe('CustomerPage pending-first file', () => {
     expect(screen.getByRole('link', { name: 'Explorar' }).getAttribute('href')).toBe(
       `/archive?customer=${customerId}`,
     )
+  })
+
+  it('a cancelled order shows in the expanded past orders', async () => {
+    const o = await createOrder(
+      { customer: customerId, pickupAt: '2026-11-12T10:00:00.000Z' },
+      [{ name: 'Pollo', measure: 'unit', quantity: 1 }],
+    )
+    await cancelOrder(o.order.id)
+    renderPage()
+    expect(orderHrefs()).toEqual([])
+    fireEvent.click(await screen.findByRole('button', { name: 'Veure lliurats' }))
+    await screen.findByRole('link', { name: 'Explorar' })
+    expect(orderHrefs()).toEqual([`/orders/${o.order.id}`])
+    expect(screen.getByText('Cancel·lat')).toBeTruthy()
   })
 
   it('"Veure pagats" shows at most 5, the most recent, with the paid total', async () => {

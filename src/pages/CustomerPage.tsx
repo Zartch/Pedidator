@@ -109,7 +109,7 @@ function OrdersBlock({
     .filter((o) => o.status === 'pending')
     .sort((a, b) => a.pickupAt.localeCompare(b.pickupAt))
   // `orders` come newest pickup first.
-  const delivered = (orders ?? []).filter((o) => o.status === 'delivered').slice(0, RECENT)
+  const delivered = (orders ?? []).filter((o) => o.status !== 'pending').slice(0, RECENT)
 
   return (
     <section className="flex flex-col gap-3">
