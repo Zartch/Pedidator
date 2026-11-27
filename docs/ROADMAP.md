@@ -69,7 +69,7 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 | Bloque | Pasos |
 |---|---|
 | Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
-| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☐ F1-14 · ☐ **Puerta G1** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☐ F1-14 · ☐ F1-15 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -87,6 +87,7 @@ En paralelo (el resto, en orden):
 | F2-10 | F2-11, F2-12, F2-13 |
 | F3-3 | F3-4, F3-5, F3-6 |
 | F4-1 | F4-2, F4-4 |
+| F1-13 | F1-14, F1-15 |
 
 ## 3. Contratos (no se cambian dentro de un paso)
 
@@ -345,15 +346,25 @@ _Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: consul
 - **No hagas:** cambiar `repo/tickets.ts`, el diálogo de nuevo ticket ni la vista de pendientes.
 - **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el filtro por cliente y por fechas (un pago a las 00:30 de Madrid cuenta en ese día); el orden por `paidAt`; el total filtrado; "Volver a pendiente" lo devuelve a la pestaña Pendientes. En `e2e/demo.spec.ts`: marcar un ticket pagado, verlo en Pagados y devolverlo a pendiente.
 
-### F1-14 · Tickets en la ficha del cliente · `haiku`
+### F1-14 · Ficha del cliente y explorar · `sonnet`
 _Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
-- **Lee:** SPEC §5 puntos 4 y 5; `docs/design/README.md` y la maqueta `docs/design/screens/Cliente.dc.html`.
-- **Archivos:** `src/pages/CustomerPage.tsx` (+ test), `src/components/tickets/{TicketThumb,TicketGroup,PaidTicketList}.tsx`, `src/i18n/{ca,es}/customers.json`.
+- **Lee:** SPEC §5 puntos 2 ("Vista Archivo"), 4 y 5; `docs/design/README.md` y la maqueta `docs/design/screens/Cliente.dc.html`.
+- **Archivos:** `src/pages/CustomerPage.tsx` (+ test), `src/pages/ArchivePage.tsx` (+ test), `src/components/tickets/{TicketThumb,TicketGroup,PaidTicketList}.tsx` (+ test de `PaidTicketList`), `src/data/hooks.ts` (+ test), `src/i18n/{ca,es}/{customers,archive,tickets}.json`, `e2e/demo.spec.ts`.
 - **Tareas:**
-  1. `TicketThumb.tsx`: la miniatura de un ticket que hoy está duplicada en `TicketGroup` (privada) y en `PaidTicketList` (`PaidThumb`), sacada a un componente común; los dos la usan sin cambiar su aspecto ni su comportamiento.
-  2. `CustomerPage`: los tickets en dos bloques, "Pendientes" con su total y "Pagados" con el total pagado (orden por `paidAt` descendente; los pendientes por fecha de creación descendente); en cada uno, mensaje si está vacío. Cada ticket: importe, notas, fecha del ticket, fecha de pago si la tiene y `TicketThumb` (abre `PhotoViewer`). "Marcar como pagado" (`markTicketPaid`) en los pendientes y "Volver a pendiente" con confirmación en `AppDialog` (`markTicketUnpaid`) en los pagados.
-- **No hagas:** cambiar `repo/tickets.ts` ni `hooks.ts` (`useCustomerTickets` ya devuelve todos); cambiar la pantalla Tickets más allá de usar `TicketThumb`.
-- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: un cliente con tickets pendientes y pagados los muestra en su bloque con sus totales; "Marcar como pagado" lo pasa a Pagados; "Volver a pendiente" pide confirmación y lo devuelve; sin tickets de un tipo se ve el mensaje de vacío.
+  1. `TicketThumb.tsx`: la miniatura de un ticket que hoy está duplicada en `TicketGroup` (privada) y en `PaidTicketList` (`PaidThumb`), sacada a un componente común que usan los dos sin cambiar su aspecto.
+  2. `hooks.ts`: `ArchiveFilter` y `PaidTicketFilter` admiten `customerId` (filtra por id; se combina con texto y fechas).
+  3. `ArchivePage` y `PaidTicketList`: filtros en la URL (`customer`, `from`, `to`, y el texto como `q`) con `useSearchParams`; con `customer`, chip con el nombre del cliente y botón para quitarlo.
+  4. `CustomerPage`: de entrada, encargos pendientes (recogida ascendente) y tickets pendientes con su total. "Ver entregados" y "Ver pagados" despliegan los 5 últimos (con el total pagado en los tickets) y un botón "Explorar" que enlaza a `/archive?customer=<id>` y `/tickets?view=paid&customer=<id>`. Tickets con importe, notas, fecha del ticket, fecha de pago, `TicketThumb` (abre `PhotoViewer`), "Marcar como pagado" (`markTicketPaid`) y "Volver a pendiente" con confirmación en `AppDialog` (`markTicketUnpaid`). Mensaje de vacío en cada bloque.
+- **No hagas:** cambiar `repo/*`; tocar el calendario ni la pantalla del día (es F1-15).
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: la ficha muestra de entrada solo lo pendiente; "Ver entregados"/"Ver pagados" muestran como mucho 5, los más recientes; "Marcar como pagado" lo saca de pendientes; "Volver a pendiente" pide confirmación; `/archive?customer=<id>&from=…&to=…` filtra por cliente y fechas y quitar el chip quita el filtro de cliente; lo mismo en Pagados. En `e2e/demo.spec.ts`: desde una ficha, "Ver pagados" → "Explorar" abre Pagados filtrado por ese cliente.
+
+### F1-15 · Calendario desplegable en móvil · `haiku`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 punto 2 (calendario); bloque Calendar de `docs/design/components.css`; maqueta `docs/design/screens/Main.dc.html`.
+- **Archivos:** `src/pages/DayPage.tsx` (+ test), `src/components/day/{WeekStrip,MonthCalendar}.tsx`, `src/i18n/{ca,es}/day.json`.
+- **Tareas:** en móvil (por debajo de `bp-tablet`), un botón junto a la semana ("Ver mes" / "Ver semana", con icono y `aria-expanded`) cambia entre `WeekStrip` y `MonthCalendar` con las mismas marcas y la misma selección de día; la elección se recuerda en el dispositivo (`localStorage`, como "Mostrar entregados"). Elegir un día en el mes lo abre y deja el mes desplegado. En tablet no cambia nada.
+- **No hagas:** cambiar las marcas ni cómo se calculan; tocar la ficha del cliente (es F1-14).
+- **Hecho cuando:** `npm run check` pasa, con tests de: el botón cambia de semana a mes y vuelta; la elección se recuerda al volver a montar la página; elegir un día desde el mes navega a ese día.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).

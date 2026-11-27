@@ -366,7 +366,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
 
 1. **Login.**
 2. **Día (inicio): el espacio de trabajo**
-   - Se abre en **hoy**. Arriba, el día y cómo moverse: anterior, siguiente, "Hoy" y el calendario (la semana en móvil, el mes en tablet).
+   - Se abre en **hoy**. Arriba, el día y cómo moverse: anterior, siguiente, "Hoy" y el calendario (la semana en móvil, el mes en tablet). En móvil, un botón **despliega el mes entero** y lo vuelve a plegar; se recuerda en el dispositivo.
    - **Barra de progreso**: _"3 de 8 encargos preparados"_, y debajo cuántos quedan por preparar y cuántos se han entregado.
    - **Próxima recogida**: el siguiente encargo sin entregar, con su hora y cliente, destacado.
    - **Encargos del día por hora de recogida.** Cada uno muestra hora (lo más grande), cliente, sus artículos con cantidad (`2,5 kg`, `750 g`, `6 u`) y notas, y su estado: por preparar, **preparado**, entregado. **Los artículos se marcan desde aquí**, sin abrir el encargo. Sin importes.
@@ -378,7 +378,7 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
    - Calendario: punto en los días con pedidos, marca de **importante** y color de **preparar la víspera** en el día de recogida. Por defecto cuenta solo pedidos activos; un interruptor **"Mostrar entregados"** añade los archivados, y se recuerda en el dispositivo.
    - Recuento de pedidos entregados en el mes.
    - Botón **Nuevo encargo**.
-   - Vista **Archivo**: búsqueda de pedidos entregados y cancelados por cliente o fecha.
+   - Vista **Archivo**: búsqueda de pedidos entregados y cancelados por cliente o fecha. Los filtros van en la URL (`?customer=<id>&from=…&to=…`); con `customer` se filtra por ese cliente y se muestra su nombre con un botón para quitar el filtro.
    - En tablet horizontal: a la izquierda el día de un vistazo (calendario, progreso, próxima recogida y "Preparar hoy para mañana"); a la derecha, los encargos del día por hora con sus artículos para ir marcando.
 3. **Formulario de encargo** (crear y editar)
    - Cliente: campo con sugerencias (búsqueda por `nameKey`). Si no existe → "Crear cliente «X»".
@@ -394,8 +394,11 @@ Interfaz en **catalán y castellano**: selector de idioma en el perfil y, por de
    - Visor de foto a pantalla completa (sin conexión, la miniatura). Marcar como pagado. Historial (igual que en los pedidos).
    - Diálogos con desplazamiento (teclado del iPad). No se cierran al tocar fuera.
    - Mensaje centrado "No hay tickets pendientes" cuando no hay ninguno.
-   - **Pagados** (pestaña junto a "Pendientes", recordada en la URL `?view=paid`): lista de tickets pagados, del más reciente al más antiguo por `paidAt`, con búsqueda por cliente (`nameKey`) y rango de fechas de pago (días de Madrid). Cada uno: cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre el visor). Total de lo que se ve filtrado. "Volver a pendiente" con confirmación (quita `paid` y `paidAt`). Mensaje centrado si no hay ninguno.
-5. **Clientes**: lista, ficha (teléfono, notas, sus pedidos y tickets) y, en la fase 5, fusionar duplicados. En la ficha, los tickets van en dos bloques: **Pendientes** (con su total) y **Pagados** (con el total pagado, por `paidAt` del más reciente al más antiguo). Cada ticket muestra importe, notas, fecha del ticket, fecha de pago si la tiene y miniatura (abre el visor), con "Marcar como pagado" o "Volver a pendiente" (con confirmación).
+   - **Pagados** (pestaña junto a "Pendientes", recordada en la URL `?view=paid`): lista de tickets pagados, del más reciente al más antiguo por `paidAt`, con búsqueda por cliente (`nameKey`) y rango de fechas de pago (días de Madrid). Cada uno: cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre el visor). Total de lo que se ve filtrado. Los filtros van en la URL igual que en el Archivo (`customer`, `from`, `to`). "Volver a pendiente" con confirmación (quita `paid` y `paidAt`). Mensaje centrado si no hay ninguno.
+5. **Clientes**: lista, ficha y, en la fase 5, fusionar duplicados.
+   - **Ficha**: teléfono y notas editables. **De entrada solo se ve lo pendiente**: sus encargos pendientes (por recogida, del más próximo al más lejano) y sus tickets pendientes con su total.
+   - Debajo de los encargos, **"Ver entregados"** despliega los 5 últimos entregados o cancelados (por recogida, del más reciente al más antiguo); debajo de los tickets, **"Ver pagados"** despliega los 5 últimos pagados (por `paidAt`) con el total pagado. Cada bloque desplegado tiene **"Explorar"**, que abre el Archivo o Tickets › Pagados **ya filtrados por ese cliente**, donde se filtra por fechas.
+   - Cada ticket muestra importe, notas, fecha del ticket, fecha de pago si la tiene y miniatura (abre el visor), con "Marcar como pagado" en los pendientes y "Volver a pendiente" (con confirmación) en los pagados.
 6. **Conflictos** (ver 4.4).
 7. **Ajustes de la empresa** (`company_admin` y `platform_admin`): nombre, idioma, **color de la empresa** (con vista previa), destinatarios y hora del correo, usuarios (alta, rol, baja). Botones de "Enviar resumen ahora" y "Exportar JSON".
 8. **Administración de la plataforma** (`platform_admin`): lista de empresas, crear empresa y su primer administrador, y **cambiar de empresa** (cambia la base de datos local). El nombre de la empresa activa se ve siempre en la cabecera.
