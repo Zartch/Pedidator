@@ -22,3 +22,4 @@
 - F1-13: pestaña "Pagados" en Tickets con búsqueda por cliente, rango de fechas de pago, total filtrado, miniatura y "Volver a pendiente".
 - F1-14: ficha del cliente con lo pendiente de entrada, "Ver entregados"/"Ver pagados" con los 5 últimos y "Explorar" al Archivo y a Pagados filtrados por cliente; filtros del Archivo y de Pagados en la URL; miniatura de ticket común (`TicketThumb`).
 - F1-15: en móvil, botón "Ver mes"/"Ver semana" que despliega el calendario del mes entero en el espacio de trabajo del día, recordado en el dispositivo.
+- F1-16: calendario que se arrastra sin cambiar el día elegido: semana en horizontal (encaje por semanas) y mes en vertical (encaje por meses, también en tablet); "Ver mes" abre el mes de la semana que se ve; marcas por rango (`queryRangeMarks`).
