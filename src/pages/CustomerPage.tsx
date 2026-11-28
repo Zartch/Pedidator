@@ -50,8 +50,12 @@ export default function CustomerPage() {
   const { t, i18n } = useTranslation('customers')
   const { id = '' } = useParams()
   const customer = useCustomer(id)
-  const orders = useCustomerOrders(id)
-  const tickets = useCustomerTickets(id)
+  // useLiveQuery keeps the previous result while `id` changes: anything not of this
+  // customer counts as still loading, so A's data is never shown under B's name.
+  const rawOrders = useCustomerOrders(id)
+  const rawTickets = useCustomerTickets(id)
+  const orders = rawOrders?.every((o) => o.customer === id) ? rawOrders : undefined
+  const tickets = rawTickets?.every((x) => x.customer === id) ? rawTickets : undefined
   const locale: Locale = i18n.language === 'es' ? 'es' : 'ca'
 
   // undefined = loading; null = unknown, deleted or merged customer.
