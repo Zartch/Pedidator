@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
@@ -8,7 +8,7 @@ import type { OrderItem } from '@shared/types'
 import {
   useDayOrders,
   useMonthDeliveredCount,
-  useMonthMarks,
+  useRangeMarks,
   usePrepAheadItems,
   type DayMarks,
 } from '@/data/hooks'
@@ -17,19 +17,28 @@ import { DayHeader } from '@/components/day/DayHeader'
 import { DayOrderList } from '@/components/day/DayOrderList'
 import { DayProgress } from '@/components/day/DayProgress'
 import { DeliveredGroup } from '@/components/day/DeliveredGroup'
-import { CalendarLegend, MonthCalendar } from '@/components/day/MonthCalendar'
+import {
+  CalendarLegend,
+  MONTH_WINDOW,
+  MonthCalendar,
+} from '@/components/day/MonthCalendar'
 import { NextPickup } from '@/components/day/NextPickup'
 import { PrepAheadList } from '@/components/day/PrepAheadList'
 import { WeekStrip } from '@/components/day/WeekStrip'
 import {
+  addDays,
   addMonths,
   dateLocale,
   dayToDisplayDate,
   isDay,
+  monthBounds,
   monthOf,
+  monthOfWeek,
   nextDay,
   previousDay,
   todayMadrid,
+  weekMonday,
+  weekOfMonth,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 
@@ -52,6 +61,23 @@ function writeFlag(key: string, value: boolean): void {
     // Storage blocked: the choice lasts until the page reloads.
   }
 }
+
+function sameMarks(
+  a: Record<string, DayMarks>,
+  b: Record<string, DayMarks>,
+): boolean {
+  const keys = Object.keys(a)
+  if (keys.length !== Object.keys(b).length) return false
+  return keys.every(
+    (k) =>
+      b[k] !== undefined &&
+      a[k].hasOrders === b[k].hasOrders &&
+      a[k].important === b[k].important &&
+      a[k].prepAhead === b[k].prepAhead,
+  )
+}
+
+const MARKS_MONTHS = MONTH_WINDOW + 7
 
 const EMPTY_MARKS: Record<string, DayMarks> = {}
 
@@ -76,16 +102,34 @@ export default function DayPage() {
   const orders = useDayOrders(day)
   const prepAhead = usePrepAheadItems(day)
   const monthDelivered = useMonthDeliveredCount(month)
-  // Marks of the neighbouring months too: the grid and the week show days of both.
+  // What the dragged calendars show. `focus` forces them onto a week/month after a
+  // toggle; it only holds for the day it was set on (changing day re-centres them).
+  const [focus, setFocus] = useState<{
+    day: string
+    week?: string
+    month?: string
+  }>()
+  const [visibleWeek, setVisibleWeek] = useState<string>()
+  const [visibleMonth, setVisibleMonth] = useState<string>()
+  const focusWeek = focus?.day === day ? focus.week : undefined
+  const focusMonth = focus?.day === day ? focus.month : undefined
+  // Marks of both drag windows (the months one's 12 each side; the weeks one's 26, about 6 months more).
+  const marksCenter = focusMonth ?? (focusWeek ? monthOf(focusWeek) : month)
   const markOptions = { includeArchived: showDelivered }
-  const before = useMonthMarks(addMonths(month, -1), markOptions)
-  const current = useMonthMarks(month, markOptions)
-  const after = useMonthMarks(addMonths(month, 1), markOptions)
-  const marks = {
-    ...(before ?? EMPTY_MARKS),
-    ...(current ?? EMPTY_MARKS),
-    ...(after ?? EMPTY_MARKS),
-  }
+  const rawMarks =
+    useRangeMarks(
+      addDays(monthBounds(addMonths(marksCenter, -MARKS_MONTHS)).first, -6),
+      addDays(monthBounds(addMonths(marksCenter, MARKS_MONTHS)).last, 6),
+      markOptions,
+    ) ?? EMPTY_MARKS
+  // Keep the same object while the marks are equal: the calendars skip re-rendering.
+  const [marks, setMarks] = useState(rawMarks)
+  if (marks !== rawMarks && !sameMarks(marks, rawMarks)) setMarks(rawMarks)
+
+  const select = useCallback(
+    (d: string) => void navigate(d === today ? '/' : `/day/${d}`),
+    [navigate, today],
+  )
 
   if (!valid) return <Navigate to="/" replace />
 
@@ -101,7 +145,20 @@ export default function DayPage() {
   )
   const next = isToday ? pending[0] : undefined
 
-  const select = (d: string) => void navigate(d === today ? '/' : `/day/${d}`)
+  const showMonth = () => {
+    const m = monthOfWeek(visibleWeek ?? weekMonday(day), day)
+    setFocus({ day, month: m })
+    setVisibleMonth(m)
+    writeFlag(PHONE_MONTH_KEY, true)
+    setPhoneMonth(true)
+  }
+  const showWeek = () => {
+    const w = weekOfMonth(visibleMonth ?? month, day)
+    setFocus({ day, week: w })
+    setVisibleWeek(w)
+    writeFlag(PHONE_MONTH_KEY, false)
+    setPhoneMonth(false)
+  }
   const monthName = format(dayToDisplayDate(`${month}-01`), 'LLLL', { locale })
 
   return (
@@ -121,10 +178,7 @@ export default function DayPage() {
               variant="ghost"
               aria-expanded={phoneMonth}
               aria-controls="day-calendar-phone"
-              onClick={() => {
-                writeFlag(PHONE_MONTH_KEY, !phoneMonth)
-                setPhoneMonth(!phoneMonth)
-              }}
+              onClick={phoneMonth ? showWeek : showMonth}
             >
               <CalendarDays className="size-5" aria-hidden="true" />
               {phoneMonth ? t('calendar.showWeek') : t('calendar.showMonth')}
@@ -137,6 +191,8 @@ export default function DayPage() {
                 today={today}
                 marks={marks}
                 onSelect={select}
+                anchor={focusMonth}
+                onVisibleMonthChange={setVisibleMonth}
               />
             ) : (
               <WeekStrip
@@ -144,6 +200,8 @@ export default function DayPage() {
                 today={today}
                 marks={marks}
                 onSelect={select}
+                anchor={focusWeek}
+                onVisibleWeekChange={setVisibleWeek}
               />
             )}
           </div>

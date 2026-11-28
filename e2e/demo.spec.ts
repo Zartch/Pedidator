@@ -43,7 +43,11 @@ test('crear un encàrrec per avui, preparar-lo i veure el progrés', async ({
   await openDay(page)
   await expect(page.getByText('Cap encàrrec per a aquest dia')).toBeVisible()
 
-  await newOrder(page, { customer: 'Maria Soler', day: madridDay(), time: '10:30' })
+  await newOrder(page, {
+    customer: 'Maria Soler',
+    day: madridDay(),
+    time: '10:30',
+  })
 
   const first = itemRow(page, 1)
   await first.getByLabel('Article', { exact: true }).fill('Pollastre')
@@ -101,10 +105,12 @@ test('un encàrrec de demà amb article del dia anterior surt a "Preparar avui p
   await expect(prep.getByText('0/1')).toBeVisible()
 
   // The calendar marks tomorrow as "prepare the day before" (month grid on this viewport).
+  // Tomorrow can also show as a muted day of a neighbouring month, hence `first()`.
   const tomorrowButton = page
     .getByRole('group', { name: /^Calendari de/ })
     .getByRole('button', { name: /preparar la vigília/ })
-  await expect(tomorrowButton).toHaveCount(1)
+    .first()
+  await expect(tomorrowButton).toBeVisible()
   await expect(tomorrowButton).toContainText(String(Number(tomorrow.slice(8))))
 
   await prep.getByRole('checkbox', { name: /Rostit de vedella/ }).click()
@@ -113,7 +119,11 @@ test('un encàrrec de demà amb article del dia anterior surt a "Preparar avui p
 
 test('lliurar un encàrrec el plega a "Lliurats"', async ({ page }) => {
   await openDay(page)
-  await newOrder(page, { customer: 'Anna Puig', day: madridDay(), time: '12:00' })
+  await newOrder(page, {
+    customer: 'Anna Puig',
+    day: madridDay(),
+    time: '12:00',
+  })
   const row = itemRow(page, 1)
   await row.getByLabel('Article', { exact: true }).fill('Costelles')
   await row.getByLabel('Quantitat').fill('3')
@@ -141,7 +151,11 @@ test('lliurar un encàrrec el plega a "Lliurats"', async ({ page }) => {
 
 test('lliurar deixant a deure crea el ticket pendent', async ({ page }) => {
   await openDay(page)
-  await newOrder(page, { customer: 'Laia Roca', day: madridDay(), time: '12:00' })
+  await newOrder(page, {
+    customer: 'Laia Roca',
+    day: madridDay(),
+    time: '12:00',
+  })
   const row = itemRow(page, 1)
   await row.getByLabel('Article', { exact: true }).fill('Llonganissa')
   await row.getByLabel('Quantitat').fill('1')
@@ -175,8 +189,12 @@ test('crear un ticket i marcar-lo com a pagat', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Joan Ferrer' })).toBeVisible()
   await expect(page.getByText('12,50').first()).toBeVisible()
 
-  await page.getByRole('button', { name: /^Marca com a pagat: Joan Ferrer/ }).click()
-  await expect(page.getByRole('heading', { name: 'Joan Ferrer' })).toHaveCount(0)
+  await page
+    .getByRole('button', { name: /^Marca com a pagat: Joan Ferrer/ })
+    .click()
+  await expect(page.getByRole('heading', { name: 'Joan Ferrer' })).toHaveCount(
+    0,
+  )
   await expect(page.getByText('No hi ha tickets pendents')).toBeVisible()
 })
 
@@ -188,7 +206,9 @@ test('un ticket pagat es veu a Pagats i torna a pendent', async ({ page }) => {
   await dialog.getByLabel('Client', { exact: true }).fill('Lluís Mas')
   await dialog.getByLabel('Import').fill('7,30')
   await dialog.getByRole('button', { name: 'Desa', exact: true }).click()
-  await page.getByRole('button', { name: /^Marca com a pagat: Lluís Mas/ }).click()
+  await page
+    .getByRole('button', { name: /^Marca com a pagat: Lluís Mas/ })
+    .click()
   await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toHaveCount(0)
 
   await page.getByRole('tab', { name: 'Pagats' }).click()
@@ -206,7 +226,7 @@ test('un ticket pagat es veu a Pagats i torna a pendent', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toBeVisible()
 })
 
-test('canviar d\'idioma tradueix la interfície', async ({ page }) => {
+test("canviar d'idioma tradueix la interfície", async ({ page }) => {
   await openDay(page)
   await expect(page.getByRole('link', { name: 'Nou encàrrec' })).toBeVisible()
 
@@ -223,7 +243,11 @@ test('les dades segueixen després de recarregar sense connexió', async ({
   context,
 }) => {
   await openDay(page)
-  await newOrder(page, { customer: 'Rosa Camps', day: madridDay(), time: '09:15' })
+  await newOrder(page, {
+    customer: 'Rosa Camps',
+    day: madridDay(),
+    time: '09:15',
+  })
   const row = itemRow(page, 1)
   await row.getByLabel('Article', { exact: true }).fill('Llom')
   await row.getByLabel('Quantitat').fill('4')
@@ -252,10 +276,16 @@ test('editar un producte del catàleg es veu als suggeriments del formulari', as
 }) => {
   await openDay(page)
   // Saving an order fills the catalogue by itself.
-  await newOrder(page, { customer: 'Marta Vidal', day: madridDay(), time: '09:00' })
+  await newOrder(page, {
+    customer: 'Marta Vidal',
+    day: madridDay(),
+    time: '09:00',
+  })
   await itemRow(page, 1).getByLabel('Article', { exact: true }).fill('Entrecot')
   await save(page)
-  await expect(page.getByRole('article').filter({ hasText: 'Marta Vidal' })).toBeVisible()
+  await expect(
+    page.getByRole('article').filter({ hasText: 'Marta Vidal' }),
+  ).toBeVisible()
 
   await page.getByRole('link', { name: 'Productes' }).click()
   await expect(page.getByRole('heading', { name: 'Productes' })).toBeVisible()
@@ -263,16 +293,22 @@ test('editar un producte del catàleg es veu als suggeriments del formulari', as
   await page.getByLabel('Nom', { exact: true }).fill('Entrecot de vedella')
   await page.getByRole('button', { name: 'Pes', exact: true }).click()
   await page.getByRole('button', { name: 'Desa', exact: true }).click()
-  await expect(page.getByRole('link', { name: /Entrecot de vedella/ })).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: /Entrecot de vedella/ }),
+  ).toBeVisible()
 
   await page.getByRole('link', { name: 'Dia', exact: true }).click()
   await page.getByRole('link', { name: 'Nou encàrrec' }).click()
   const name = itemRow(page, 1).getByLabel('Article', { exact: true })
   await name.fill('entre')
-  await expect(page.getByRole('button', { name: 'Entrecot de vedella' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'Entrecot de vedella' }),
+  ).toBeVisible()
 })
 
-test("des d'una fitxa, Veure pagats i Explorar obre Pagats filtrat pel client", async ({ page }) => {
+test("des d'una fitxa, Veure pagats i Explorar obre Pagats filtrat pel client", async ({
+  page,
+}) => {
   await page.goto('/')
   await page.getByRole('link', { name: 'Tickets' }).click()
   for (const [name, amount] of [
@@ -284,7 +320,9 @@ test("des d'una fitxa, Veure pagats i Explorar obre Pagats filtrat pel client", 
     await dialog.getByLabel('Client', { exact: true }).fill(name)
     await dialog.getByLabel('Import').fill(amount)
     await dialog.getByRole('button', { name: 'Desa', exact: true }).click()
-    await page.getByRole('button', { name: new RegExp(`^Marca com a pagat: ${name}`) }).click()
+    await page
+      .getByRole('button', { name: new RegExp(`^Marca com a pagat: ${name}`) })
+      .click()
   }
 
   await page.getByRole('link', { name: 'Clients' }).click()
@@ -296,4 +334,50 @@ test("des d'una fitxa, Veure pagats i Explorar obre Pagats filtrat pel client", 
   await expect(page.getByRole('heading', { name: 'Lluís Mas' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Anna Roca' })).toHaveCount(0)
   await expect(page.getByTestId('customer-chip')).toContainText('Lluís Mas')
+})
+
+test.describe("calendari que s'arrossega (mòbil)", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true })
+
+  test('desplaçar la setmana canvia el rètol i no la URL; "Veure el mes" obre el mes d\'aquella setmana', async ({
+    page,
+  }) => {
+    await openDay(page)
+    const title = page.getByTestId('week-title')
+    const before = await title.textContent()
+    const url = page.url()
+    const phone = page.locator('#day-calendar-phone')
+
+    // Two weeks forward: the visible week changes, the selected day and the URL do not.
+    await phone.locator('.snap-x').evaluate((el) => {
+      el.scrollLeft += 2 * el.clientWidth
+    })
+    await expect(title).not.toHaveText(before ?? '')
+    expect(page.url()).toBe(url)
+    await expect(phone.getByRole('button', { pressed: true })).toHaveCount(1)
+
+    // The selected day is not in that week, so "Ver mes" opens the month of its Thursday.
+    const [y, m, d] = madridDay().split('-').map(Number)
+    const monday =
+      Date.UTC(y, m - 1, d) -
+      ((new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7) * 86_400_000
+    const thursday = new Date(monday + 17 * 86_400_000)
+    const monthName = new Intl.DateTimeFormat('ca', {
+      month: 'long',
+      timeZone: 'UTC',
+    }).format(thursday)
+    const expected = `${monthName} ${thursday.getUTCFullYear()}`
+
+    await page.getByRole('button', { name: 'Veure el mes' }).click()
+    await expect(
+      page.getByRole('button', { name: 'Veure la setmana' }),
+    ).toBeVisible()
+    const shown = await phone.locator('.snap-y').evaluate((el) => {
+      const section = el.firstElementChild as HTMLElement
+      const idx = Math.round(el.scrollTop / section.offsetHeight)
+      return el.children[idx].querySelector('span')?.textContent ?? ''
+    })
+    expect(shown.toLowerCase()).toBe(expected.toLowerCase())
+    expect(page.url()).toBe(url)
+  })
 })

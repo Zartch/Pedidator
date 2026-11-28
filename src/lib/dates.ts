@@ -106,6 +106,46 @@ export function monthGrid(month: string): string[] {
   return days
 }
 
+/** Monday of the week containing `day`. */
+export function weekMonday(day: string): string {
+  return addDays(day, -weekdayIndex(day))
+}
+
+/** Mondays of the `n` weeks before and the `n` after the week of `day` (2n + 1, in order). */
+export function weeksAround(day: string, n: number): string[] {
+  const monday = weekMonday(day)
+  return Array.from({ length: 2 * n + 1 }, (_, i) =>
+    addDays(monday, (i - n) * 7),
+  )
+}
+
+/** The `n` months before and the `n` after `month` ("YYYY-MM"), 2n + 1 in order. */
+export function monthsAround(month: string, n: number): string[] {
+  return Array.from({ length: 2 * n + 1 }, (_, i) => addMonths(month, i - n))
+}
+
+/**
+ * Month shown for a week: the selected day's month when that day is in the
+ * week, else the month of the week's Thursday (the ISO rule).
+ */
+export function monthOfWeek(
+  weekMondayDay: string,
+  selectedDay: string,
+): string {
+  const days = weekDays(weekMondayDay)
+  if (days.includes(selectedDay)) return monthOf(selectedDay)
+  return monthOf(days[3])
+}
+
+/**
+ * Week (its Monday) shown for a month: the selected day's week when that day is
+ * in the month, else the week of the 1st.
+ */
+export function weekOfMonth(month: string, selectedDay: string): string {
+  if (monthOf(selectedDay) === month) return weekMonday(selectedDay)
+  return weekMonday(`${month}-01`)
+}
+
 /**
  * Local-time Date at noon of a Madrid day, for formatting the day with date-fns
  * (never for calculations).

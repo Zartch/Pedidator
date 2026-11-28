@@ -8,6 +8,7 @@ import {
   queryCustomerOrders,
   queryDayOrders,
   queryMonthMarks,
+  queryRangeMarks,
   queryOrderDetail,
   queryPaidTickets,
   queryPendingTickets,
@@ -199,7 +200,11 @@ describe('suggestions', () => {
       prepDayBefore: true,
       unitPriceCents: 2490,
     })
-    await createProduct({ name: 'Pollo', measure: 'unit', prepDayBefore: false })
+    await createProduct({
+      name: 'Pollo',
+      measure: 'unit',
+      prepDayBefore: false,
+    })
     expect(await querySuggestItems(db(), 'ENTRÉ')).toEqual([
       {
         name: 'Entrecot',
@@ -309,11 +314,16 @@ describe('archive and counts', () => {
   it('filters archived orders by customer id, combined with the day range', async () => {
     const { ana, o1, o3 } = await seed()
     expect(
-      (await queryArchivedOrders(db(), { customerId: ana.id })).map((d) => d.order.id),
+      (await queryArchivedOrders(db(), { customerId: ana.id })).map(
+        (d) => d.order.id,
+      ),
     ).toEqual([o1.id, o3.id])
     expect(
       (
-        await queryArchivedOrders(db(), { customerId: ana.id, fromDay: '2026-12-05' })
+        await queryArchivedOrders(db(), {
+          customerId: ana.id,
+          fromDay: '2026-12-05',
+        })
       ).map((d) => d.order.id),
     ).toEqual([o1.id])
   })
@@ -344,7 +354,7 @@ describe('archive and counts', () => {
   })
 })
 
-describe("paid tickets", () => {
+describe('paid tickets', () => {
   async function paidAt(amount: number, customerId: string, at: string) {
     const t = await createTicket({ customer: customerId, amountCents: amount })
     await markTicketPaid(t.id)
@@ -352,62 +362,102 @@ describe("paid tickets", () => {
     return t
   }
 
-  it("lists only paid, live tickets, newest payment first, with the customer", async () => {
-    const ana = await getOrCreateCustomerByName("Ana")
-    const zoe = await getOrCreateCustomerByName("Zoe")
-    const older = await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
-    const newer = await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
+  it('lists only paid, live tickets, newest payment first, with the customer', async () => {
+    const ana = await getOrCreateCustomerByName('Ana')
+    const zoe = await getOrCreateCustomerByName('Zoe')
+    const older = await paidAt(100, ana.id, '2026-11-10T10:00:00.000Z')
+    const newer = await paidAt(200, zoe.id, '2026-11-20T10:00:00.000Z')
     await createTicket({ customer: ana.id, amountCents: 999 })
     const rows = await queryPaidTickets(db())
     expect(rows.map((r) => r.ticket.id)).toEqual([newer.id, older.id])
-    expect(rows.map((r) => r.customer?.name)).toEqual(["Zoe", "Ana"])
+    expect(rows.map((r) => r.customer?.name)).toEqual(['Zoe', 'Ana'])
   })
 
-  it("filters by customer id, combined with text", async () => {
-    const ana = await getOrCreateCustomerByName("Ana Puig")
-    const zoe = await getOrCreateCustomerByName("Zoe")
-    await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
-    await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
+  it('filters by customer id, combined with text', async () => {
+    const ana = await getOrCreateCustomerByName('Ana Puig')
+    const zoe = await getOrCreateCustomerByName('Zoe')
+    await paidAt(100, ana.id, '2026-11-10T10:00:00.000Z')
+    await paidAt(200, zoe.id, '2026-11-20T10:00:00.000Z')
     const rows = await queryPaidTickets(db(), { customerId: zoe.id })
     expect(rows.map((r) => r.ticket.amountCents)).toEqual([200])
-    expect(await queryPaidTickets(db(), { customerId: zoe.id, text: "ana" })).toEqual([])
+    expect(
+      await queryPaidTickets(db(), { customerId: zoe.id, text: 'ana' }),
+    ).toEqual([])
   })
 
-  it("filters by customer nameKey", async () => {
-    const ana = await getOrCreateCustomerByName("Ana Puig")
-    const zoe = await getOrCreateCustomerByName("Zoe")
-    await paidAt(100, ana.id, "2026-11-10T10:00:00.000Z")
-    await paidAt(200, zoe.id, "2026-11-20T10:00:00.000Z")
-    const rows = await queryPaidTickets(db(), { text: "ANÀ" })
-    expect(rows.map((r) => r.customer?.name)).toEqual(["Ana Puig"])
+  it('filters by customer nameKey', async () => {
+    const ana = await getOrCreateCustomerByName('Ana Puig')
+    const zoe = await getOrCreateCustomerByName('Zoe')
+    await paidAt(100, ana.id, '2026-11-10T10:00:00.000Z')
+    await paidAt(200, zoe.id, '2026-11-20T10:00:00.000Z')
+    const rows = await queryPaidTickets(db(), { text: 'ANÀ' })
+    expect(rows.map((r) => r.customer?.name)).toEqual(['Ana Puig'])
   })
 
-  it("filters by Madrid days: a payment at 00:30 Madrid counts on its own day", async () => {
-    const ana = await getOrCreateCustomerByName("Ana")
+  it('filters by Madrid days: a payment at 00:30 Madrid counts on its own day', async () => {
+    const ana = await getOrCreateCustomerByName('Ana')
     // 2026-11-17 00:30 Madrid (winter, UTC+1) is 2026-11-16T23:30Z.
-    await paidAt(100, ana.id, "2026-11-16T23:30:00.000Z")
+    await paidAt(100, ana.id, '2026-11-16T23:30:00.000Z')
     // 2026-11-16 23:59 Madrid is 2026-11-16T22:59Z: still the 16th.
-    await paidAt(200, ana.id, "2026-11-16T22:59:00.000Z")
-    const day17 = await queryPaidTickets(db(), { from: "2026-11-17", to: "2026-11-17" })
+    await paidAt(200, ana.id, '2026-11-16T22:59:00.000Z')
+    const day17 = await queryPaidTickets(db(), {
+      from: '2026-11-17',
+      to: '2026-11-17',
+    })
     expect(day17.map((r) => r.ticket.amountCents)).toEqual([100])
-    const day16 = await queryPaidTickets(db(), { from: "2026-11-16", to: "2026-11-16" })
+    const day16 = await queryPaidTickets(db(), {
+      from: '2026-11-16',
+      to: '2026-11-16',
+    })
     expect(day16.map((r) => r.ticket.amountCents)).toEqual([200])
   })
 
-  it("the range is inclusive on both ends", async () => {
-    const ana = await getOrCreateCustomerByName("Ana")
-    await paidAt(1, ana.id, "2026-11-10T11:00:00.000Z")
-    await paidAt(2, ana.id, "2026-11-12T11:00:00.000Z")
-    await paidAt(3, ana.id, "2026-11-13T11:00:00.000Z")
-    const rows = await queryPaidTickets(db(), { from: "2026-11-10", to: "2026-11-12" })
+  it('the range is inclusive on both ends', async () => {
+    const ana = await getOrCreateCustomerByName('Ana')
+    await paidAt(1, ana.id, '2026-11-10T11:00:00.000Z')
+    await paidAt(2, ana.id, '2026-11-12T11:00:00.000Z')
+    await paidAt(3, ana.id, '2026-11-13T11:00:00.000Z')
+    const rows = await queryPaidTickets(db(), {
+      from: '2026-11-10',
+      to: '2026-11-12',
+    })
     expect(rows.map((r) => r.ticket.amountCents).sort()).toEqual([1, 2])
   })
 
-  it("a range leaves out tickets without a payment date", async () => {
-    const ana = await getOrCreateCustomerByName("Ana")
+  it('a range leaves out tickets without a payment date', async () => {
+    const ana = await getOrCreateCustomerByName('Ana')
     const t = await createTicket({ customer: ana.id, amountCents: 5 })
     await db().tickets.update(t.id, { paid: true })
     expect(await queryPaidTickets(db())).toHaveLength(1)
-    expect(await queryPaidTickets(db(), { from: "2026-11-01" })).toHaveLength(0)
+    expect(await queryPaidTickets(db(), { from: '2026-11-01' })).toHaveLength(0)
+  })
+})
+
+describe('range marks', () => {
+  it('give the same as month marks over a month, and span months', async () => {
+    const c = await getOrCreateCustomerByName('Ana')
+    await createOrder(
+      { customer: c.id, pickupAt: '2026-12-31T10:00:00.000Z', important: true },
+      [{ name: 'A', measure: 'unit', prepDayBefore: true }],
+    )
+    await createOrder(
+      { customer: c.id, pickupAt: '2026-12-05T10:00:00.000Z' },
+      [{ name: 'B', measure: 'unit' }],
+    )
+    await createOrder(
+      { customer: c.id, pickupAt: '2027-01-01T10:00:00.000Z' },
+      [{ name: 'D', measure: 'unit' }],
+    )
+    const month = await queryMonthMarks(db(), '2026-12')
+    expect(await queryRangeMarks(db(), '2026-12-01', '2026-12-31')).toEqual(
+      month,
+    )
+    const wide = await queryRangeMarks(db(), '2026-11-30', '2027-01-03')
+    expect(Object.keys(wide).sort()).toEqual([
+      '2026-12-05',
+      '2026-12-31',
+      '2027-01-01',
+    ])
+    expect(wide['2026-12-31']).toEqual(month['2026-12-31'])
   })
 })

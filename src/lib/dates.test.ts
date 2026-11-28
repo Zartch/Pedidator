@@ -8,11 +8,16 @@ import {
   madridDayRangeUtc,
   madridMonthRangeUtc,
   monthGrid,
+  monthOfWeek,
+  monthsAround,
   nextDay,
   previousDay,
   todayMadrid,
   utcIsoToMadridTime,
   weekDays,
+  weekMonday,
+  weekOfMonth,
+  weeksAround,
 } from './dates'
 
 describe('day arithmetic', () => {
@@ -162,5 +167,56 @@ describe('UTC ranges', () => {
       from: '2026-09-30T22:00:00.000Z',
       to: '2026-10-31T23:00:00.000Z',
     })
+  })
+})
+
+describe('drag windows', () => {
+  it('weeksAround lists the Mondays n weeks before and after, across month and year', () => {
+    const w = weeksAround('2026-12-31', 2)
+    expect(w).toEqual([
+      '2026-12-14',
+      '2026-12-21',
+      '2026-12-28',
+      '2027-01-04',
+      '2027-01-11',
+    ])
+    expect(weeksAround('2026-12-17', 26)).toHaveLength(53)
+    expect(weeksAround('2026-12-17', 26)[26]).toBe(weekMonday('2026-12-17'))
+  })
+
+  it('monthsAround lists the months n before and after, across years', () => {
+    expect(monthsAround('2026-12', 2)).toEqual([
+      '2026-10',
+      '2026-11',
+      '2026-12',
+      '2027-01',
+      '2027-02',
+    ])
+    expect(monthsAround('2026-01', 1)).toEqual([
+      '2025-12',
+      '2026-01',
+      '2026-02',
+    ])
+  })
+
+  it('monthOfWeek: the selected day month if in the week, else the Thursday month', () => {
+    // The week 2026-11-30 .. 2026-12-06 crosses a month (Thursday is 3 December).
+    expect(monthOfWeek('2026-11-30', '2026-11-30')).toBe('2026-11')
+    expect(monthOfWeek('2026-11-30', '2026-12-05')).toBe('2026-12')
+    expect(monthOfWeek('2026-11-30', '2026-12-20')).toBe('2026-12')
+    // Week 2025-12-29 .. 2026-01-04 crosses a year (Thursday is 1 January).
+    expect(monthOfWeek('2025-12-29', '2026-03-01')).toBe('2026-01')
+    expect(monthOfWeek('2025-12-29', '2025-12-30')).toBe('2025-12')
+    // Thursday in the old month: 2026-06-29 .. 2026-07-05 has Thursday 2 July; 2026-03-30 .. 04-05 has Thursday 2 April.
+    expect(monthOfWeek('2026-03-23', '2026-08-01')).toBe('2026-03')
+  })
+
+  it('weekOfMonth: the selected day week if in the month, else the week of the 1st', () => {
+    expect(weekOfMonth('2026-12', '2026-12-17')).toBe('2026-12-14')
+    // 2026-12-01 is a Tuesday: the week starts on 30 November.
+    expect(weekOfMonth('2026-12', '2026-11-20')).toBe('2026-11-30')
+    expect(weekOfMonth('2027-01', '2026-12-17')).toBe('2026-12-28')
+    // A day of the month that belongs to a week starting in the previous month.
+    expect(weekOfMonth('2026-12', '2026-12-02')).toBe('2026-11-30')
   })
 })

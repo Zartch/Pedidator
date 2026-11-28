@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import '@/i18n'
 import {
   cleanup,
+  configure,
   fireEvent,
   render,
   screen,
@@ -14,8 +15,16 @@ import { closeSession, requireSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import { getOrderItems } from '@/data/repo/orderItems'
 import { createOrder, deliverOrder, getOrder } from '@/data/repo/orders'
-import { addDays, madridDateTimeToUtcIso, todayMadrid } from '@/lib/dates'
+import {
+  addDays,
+  madridDateTimeToUtcIso,
+  todayMadrid,
+  weekdayIndex,
+} from '@/lib/dates'
 import DayPage from './DayPage'
+
+// The drag windows put a few thousand day buttons in the DOM, which makes role queries slow in jsdom.
+configure({ asyncUtilTimeout: 6000 })
 
 let seq = 0
 
@@ -185,19 +194,27 @@ describe('DayPage', () => {
     ])
     renderDay()
     await screen.findAllByText('Marta')
-    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(
+      within(card('Marta')).getByRole('button', { name: 'Lliurar' }),
+    )
     fireEvent.click(await dialogButton('Lliurar'))
     const group = await screen.findByRole('button', { name: 'Lliurats (1)' })
     fireEvent.click(group)
     fireEvent.click(screen.getByRole('button', { name: 'Torna a pendent' }))
 
     await waitFor(() =>
-      expect(within(card('Marta')).getByText('Per preparar · 1/2')).toBeDefined(),
+      expect(
+        within(card('Marta')).getByText('Per preparar · 1/2'),
+      ).toBeDefined(),
     )
     expect(screen.queryByRole('button', { name: 'Lliurats (1)' })).toBeNull()
-    const pollastre = within(card('Marta')).getByRole('checkbox', { name: /Pollastre/ })
+    const pollastre = within(card('Marta')).getByRole('checkbox', {
+      name: /Pollastre/,
+    })
     expect(pollastre.getAttribute('aria-checked')).toBe('true')
-    const botifarra = within(card('Marta')).getByRole('checkbox', { name: /Botifarra/ })
+    const botifarra = within(card('Marta')).getByRole('checkbox', {
+      name: /Botifarra/,
+    })
     expect(botifarra.getAttribute('aria-checked')).toBe('false')
   })
 
@@ -232,7 +249,9 @@ describe('DayPage', () => {
     ])
     renderDay()
     await screen.findAllByText('Marta')
-    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(
+      within(card('Marta')).getByRole('button', { name: 'Lliurar' }),
+    )
     expect(await screen.findByRole('dialog')).toBeDefined()
     fireEvent.click(await dialogButton('Tornar'))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
@@ -247,19 +266,29 @@ describe('DayPage', () => {
     ])
     renderDay()
     await screen.findAllByText('Marta')
-    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(
+      within(card('Marta')).getByRole('button', { name: 'Lliurar' }),
+    )
     fireEvent.click(await dialogButton('Lliurar i deixar a deure'))
     const dialog = screen.getByRole('dialog')
-    expect((within(dialog).getByLabelText('Notes') as HTMLTextAreaElement).value).toMatch(
-      /^Encàrrec del \d\d\/\d\d 10:00$/,
-    )
+    expect(
+      (within(dialog).getByLabelText('Notes') as HTMLTextAreaElement).value,
+    ).toMatch(/^Encàrrec del \d\d\/\d\d 10:00$/)
     // Empty amount: nothing happens and it says so.
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }))
-    expect(await within(dialog).findByText('Indica un import vàlid')).toBeDefined()
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }),
+    )
+    expect(
+      await within(dialog).findByText('Indica un import vàlid'),
+    ).toBeDefined()
     expect((await getOrder(order.id))?.status).toBe('pending')
 
-    fireEvent.change(within(dialog).getByLabelText('Import'), { target: { value: '12,50' } })
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }))
+    fireEvent.change(within(dialog).getByLabelText('Import'), {
+      target: { value: '12,50' },
+    })
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Lliurar i crear ticket' }),
+    )
     await waitFor(async () =>
       expect((await getOrder(order.id))?.status).toBe('delivered'),
     )
@@ -277,15 +306,31 @@ describe('DayPage', () => {
     const today = todayMadrid()
     const customer = await getOrCreateCustomerByName('Marta')
     await createOrder(
-      { customer: customer.id, pickupAt: madridDateTimeToUtcIso(today, '10:00') },
-      [{ name: 'Pollastre', measure: 'unit', quantity: 2, unitPriceCents: 450 }],
+      {
+        customer: customer.id,
+        pickupAt: madridDateTimeToUtcIso(today, '10:00'),
+      },
+      [
+        {
+          name: 'Pollastre',
+          measure: 'unit',
+          quantity: 2,
+          unitPriceCents: 450,
+        },
+      ],
     )
     renderDay()
     await screen.findAllByText('Marta')
-    fireEvent.click(within(card('Marta')).getByRole('button', { name: 'Lliurar' }))
+    fireEvent.click(
+      within(card('Marta')).getByRole('button', { name: 'Lliurar' }),
+    )
     fireEvent.click(await dialogButton('Lliurar i deixar a deure'))
     expect(
-      (within(screen.getByRole('dialog')).getByLabelText('Import') as HTMLInputElement).value,
+      (
+        within(screen.getByRole('dialog')).getByLabelText(
+          'Import',
+        ) as HTMLInputElement
+      ).value,
     ).toBe('9,00')
   })
 
@@ -400,8 +445,13 @@ describe('DayPage phone calendar: week strip or whole month', () => {
   it('picking a day from the month opens that day and keeps the month open', async () => {
     renderDay()
     fireEvent.click(await screen.findByRole('button', { name: 'Veure el mes' }))
+    // The month window holds many months: look in the one that holds today.
+    const currentMonth = () =>
+      monthGroup().find((g) =>
+        within(g).queryByRole('button', { pressed: true }),
+      ) as HTMLElement
     const dayButton = () =>
-      within(monthGroup()[0] as HTMLElement)
+      within(currentMonth())
         .getAllByRole('button')
         .find((b) => b.textContent === '15' && b.hasAttribute('aria-pressed'))
     // Day 15 is never a neighbouring-month day, so it is unique in the grid.
@@ -414,5 +464,42 @@ describe('DayPage phone calendar: week strip or whole month', () => {
     expect(
       screen.getByRole('button', { name: 'Veure la setmana' }),
     ).toBeDefined()
+  })
+})
+
+describe('DayPage draggable week', () => {
+  const phone = () =>
+    document.getElementById('day-calendar-phone') as HTMLElement
+
+  it('has the selected day week in the window, and tapping a day of another week selects it', async () => {
+    const today = todayMadrid()
+    renderDay()
+    const groups = await within(phone()).findAllByRole('group', {
+      name: /Setmana del/,
+    })
+    // 26 weeks each side of the selected one.
+    expect(groups).toHaveLength(53)
+    const pressed = within(phone()).getAllByRole('button', { pressed: true })
+    expect(pressed).toHaveLength(1)
+    expect(groups[26].contains(pressed[0])).toBe(true)
+
+    // Three weeks later, same weekday: the same position in the 30th week.
+    const target = within(groups[29]).getAllByRole('button')[
+      weekdayIndex(today)
+    ]
+    fireEvent.click(target)
+    await waitFor(() => {
+      const now = within(phone()).getAllByRole('button', { pressed: true })
+      expect(now).toHaveLength(1)
+    })
+    expect(
+      within(phone()).getAllByRole('group', { name: /Setmana del/ }),
+    ).toHaveLength(53)
+    const selected = within(phone()).getAllByRole('button', {
+      pressed: true,
+    })[0]
+    expect(selected.getAttribute('aria-label')).toBe(
+      target.getAttribute('aria-label'),
+    )
   })
 })

@@ -186,22 +186,20 @@ export async function queryPrepAheadItems(
 }
 
 /**
- * Marks for each day of `month` ("YYYY-MM") that has any pickup. Days without
- * orders are absent.
+ * Marks for each day of `fromDay`..`toDay` (inclusive, "YYYY-MM-DD") that has any
+ * pickup. Days without orders are absent.
  * - hasOrders: any pending order; with `includeArchived`, also delivered ones
  *   (never cancelled).
  * - important: any pending order flagged important.
  * - prepAhead: any pending order with a `prepDayBefore` item (pickup-day mark).
  */
-export async function queryMonthMarks(
+export async function queryRangeMarks(
   db: PedidatorDb,
-  month: string,
+  fromDay: string,
+  toDay: string,
   options: { includeArchived?: boolean } = {},
 ): Promise<Record<string, DayMarks>> {
-  const first = `${month}-01`
-  const [y, m] = month.split('-').map(Number)
-  const lastDay = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
-  const orders = (await ordersBetween(db, first, lastDay)).filter(
+  const orders = (await ordersBetween(db, fromDay, toDay)).filter(
     (o) =>
       o.status === 'pending' ||
       (options.includeArchived === true && o.status === 'delivered'),
@@ -225,6 +223,17 @@ export async function queryMonthMarks(
     }
   }
   return marks
+}
+
+/** Marks for each day of `month` ("YYYY-MM"); see `queryRangeMarks`. */
+export async function queryMonthMarks(
+  db: PedidatorDb,
+  month: string,
+  options: { includeArchived?: boolean } = {},
+): Promise<Record<string, DayMarks>> {
+  const [y, m] = month.split('-').map(Number)
+  const lastDay = `${month}-${String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0')}`
+  return queryRangeMarks(db, `${month}-01`, lastDay, options)
 }
 
 /** Unpaid, non-deleted tickets grouped by customer (name order), newest ticket first. */
@@ -464,16 +473,17 @@ export async function queryPaidTickets(
     await db.tickets
       .filter(
         (t) =>
-          t.paid && !t.deleted && (!filter.customerId || t.customer === filter.customerId),
+          t.paid &&
+          !t.deleted &&
+          (!filter.customerId || t.customer === filter.customerId),
       )
       .toArray()
-  )
-    .filter((t) => {
-      if (!hasRange) return true
-      if (!t.paidAt) return false
-      const ms = Date.parse(t.paidAt)
-      return ms >= fromMs && ms < toMs
-    })
+  ).filter((t) => {
+    if (!hasRange) return true
+    if (!t.paidAt) return false
+    const ms = Date.parse(t.paidAt)
+    return ms >= fromMs && ms < toMs
+  })
   const customers = await customersById(
     db,
     tickets.map((t) => t.customer),
@@ -532,6 +542,16 @@ export const useMonthMarks = (
     [month, options?.includeArchived ?? false],
   )
 
+export const useRangeMarks = (
+  fromDay: string,
+  toDay: string,
+  options?: { includeArchived?: boolean },
+) =>
+  useDbQuery(
+    (db) => queryRangeMarks(db, fromDay, toDay, options),
+    [fromDay, toDay, options?.includeArchived ?? false],
+  )
+
 export const usePendingTickets = () => useDbQuery(queryPendingTickets, [])
 
 export const useCustomerSuggestions = (text: string, limit = 8) =>
@@ -544,10 +564,7 @@ export const useProducts = () => useDbQuery(queryProducts, [])
 
 /** undefined = loading, null = not found. */
 export const useProduct = (id: string | undefined) =>
-  useDbQuery(
-    (db) => (id ? queryProduct(db, id) : Promise.resolve(null)),
-    [id],
-  )
+  useDbQuery((db) => (id ? queryProduct(db, id) : Promise.resolve(null)), [id])
 
 export const useCustomers = () => useDbQuery(queryCustomers, [])
 
@@ -565,10 +582,7 @@ export const useMonthDeliveredCount = (month: string) =>
 
 /** undefined = loading, null = not found. */
 export const useCustomer = (id: string | undefined) =>
-  useDbQuery(
-    (db) => (id ? queryCustomer(db, id) : Promise.resolve(null)),
-    [id],
-  )
+  useDbQuery((db) => (id ? queryCustomer(db, id) : Promise.resolve(null)), [id])
 
 export const useCustomerTickets = (customerId: string) =>
   useDbQuery((db) => queryCustomerTickets(db, customerId), [customerId])
