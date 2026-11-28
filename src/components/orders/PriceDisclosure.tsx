@@ -67,7 +67,7 @@ export function PriceDisclosure({
                 aria-invalid={priceInvalid ? true : undefined}
                 onChange={(e) => onPrice(e.target.value)}
               />
-              <span className="pr-3 text-ink-muted">{measure === 'weight' ? '€/kg' : '€'}</span>
+              <span className="pr-3 text-ink-muted">{measure === 'weight' ? t('price.suffixKilo') : t('price.suffixUnit')}</span>
             </div>
             {priceInvalid && (
               <span className="text-(length:--type-caption-size) text-danger">

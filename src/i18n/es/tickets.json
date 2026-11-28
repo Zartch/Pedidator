@@ -30,6 +30,7 @@
     "save": "Guardar",
     "saving": "Guardando…",
     "cancel": "Cancelar",
+    "currency": "€",
     "errorCustomer": "Indica el cliente",
     "errorAmount": "Indica un importe válido",
     "errorSave": "No se ha podido guardar el ticket"

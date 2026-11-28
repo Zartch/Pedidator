@@ -44,6 +44,8 @@
     "number": "Article {{n}}"
   },
   "weight": {
+    "g": "g",
+    "kg": "kg",
     "unit": "Unitat",
     "equals": "= {{value}}",
     "emptyHint": "Escriu grams o quilos",
@@ -51,6 +53,8 @@
     "badKilos": "En quilos, 3 decimals com a màxim"
   },
   "price": {
+    "suffixUnit": "€",
+    "suffixKilo": "€/kg",
     "toggle": "Preu (opcional)",
     "unitPrice": "Preu per unitat",
     "kiloPrice": "Preu per quilo",
