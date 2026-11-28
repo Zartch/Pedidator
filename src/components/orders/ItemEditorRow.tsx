@@ -115,6 +115,25 @@ export function draftToInput(d: ItemDraft): DraftResult {
   }
 }
 
+/**
+ * For an existing item, keeps only the fields the user changed since the form
+ * was opened (`original`), so saving never overwrites what changed elsewhere
+ * in the meantime (e.g. an item marked as done on the day screen). New items
+ * (no id) and unparseable originals are sent complete.
+ */
+export function toSaveItem(d: ItemDraft, original?: ItemDraft): DraftResult {
+  const current = draftToInput(d)
+  if (!current.ok || !d.id || !original) return current
+  const before = draftToInput(original)
+  if (!before.ok) return current
+  const patch: Record<string, unknown> = { id: d.id }
+  for (const key of Object.keys(current.item) as (keyof SaveOrderItem)[]) {
+    if (key === 'id') continue
+    if (current.item[key] !== before.item[key]) patch[key] = current.item[key]
+  }
+  return { ok: true, item: patch as SaveOrderItem }
+}
+
 const INPUT =
   'min-h-(--touch-min) w-full rounded-sm border-[1.5px] border-line-strong bg-surface-raised px-3 text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-strong'
 const LABEL = 'text-(length:--type-label-size) font-medium'

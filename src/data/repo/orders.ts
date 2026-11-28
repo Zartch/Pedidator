@@ -18,7 +18,13 @@ export type OrderFields = {
   notes?: string
 }
 
-export type SaveOrderItem = ItemInput & { id?: string }
+/**
+ * A new item is complete; an existing one (with `id`) may carry only the
+ * fields to change, the rest keeps what is stored.
+ */
+export type SaveOrderItem =
+  | (ItemInput & { id?: string })
+  | (Partial<ItemInput> & { id: string })
 
 export async function getOrder(id: string): Promise<Order | undefined> {
   const { db } = requireSession()
@@ -79,9 +85,14 @@ export async function saveOrder(
     for (const [pos, { id: itemId, ...input }] of items.entries()) {
       if (itemId && known.has(itemId))
         await updateItem(itemId, { ...input, position: pos })
-      else await addItem(id, input, pos)
+      else await addItem(id, input as ItemInput, pos)
     }
-    await ensureProductsForItems(items)
+    // Products come from the merged view: a patch may carry only some fields.
+    const stored = new Map(existing.map((i) => [i.id, i]))
+    const merged = items.map((i) => ({ ...(i.id ? stored.get(i.id) : undefined), ...i }))
+    await ensureProductsForItems(
+      merged.flatMap((m) => (m.name && m.measure ? [{ ...m, name: m.name, measure: m.measure }] : [])),
+    )
   })
 }
 
