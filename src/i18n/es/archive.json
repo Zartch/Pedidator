@@ -1,0 +1,20 @@
+{
+  "title": "Archivo",
+  "search": {
+    "label": "Buscar por cliente",
+    "placeholder": "Nombre del cliente"
+  },
+  "range": {
+    "from": "Desde",
+    "to": "Hasta",
+    "clear": "Todas las fechas"
+  },
+  "state": {
+    "delivered": "Entregado",
+    "cancelled": "Cancelado"
+  },
+  "empty": "No hay encargos archivados con este filtro.",
+  "noCustomer": "Cliente sin nombre",
+  "noItems": "Sin artículos",
+  "removeCustomer": "Quitar el filtro de cliente"
+}

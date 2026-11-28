@@ -1,0 +1,31 @@
+{
+  "title": "Productos",
+  "new": "Nuevo producto",
+  "newTitle": "Nuevo producto",
+  "searchLabel": "Buscar producto",
+  "searchPlaceholder": "Nombre del producto",
+  "empty": "Todavía no hay productos.",
+  "noMatches": "Ningún producto coincide con la búsqueda.",
+  "loading": "Cargando…",
+  "back": "Volver a productos",
+  "notFound": "Producto no encontrado",
+  "name": "Nombre",
+  "measure": "Se pide por",
+  "units": "Unidades",
+  "weight": "Peso",
+  "prep": "Preparar el día anterior",
+  "prepBadge": "Víspera",
+  "notes": "Notas",
+  "save": "Guardar",
+  "delete": "Borrar producto",
+  "errorName": "El producto necesita un nombre",
+  "errorDuplicate": "Ya existe un producto con este nombre",
+  "errorPrice": "Precio no válido",
+  "saveError": "No se han podido guardar los cambios.",
+  "deleteDialog": {
+    "title": "¿Borrar el producto?",
+    "text": "Dejará de salir en las sugerencias. Los encargos ya hechos no cambian.",
+    "back": "Volver",
+    "confirm": "Borrar"
+  }
+}

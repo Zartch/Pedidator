@@ -68,8 +68,8 @@ No empieces el bloque siguiente hasta que yo cierre la puerta.
 
 | Bloque | Pasos |
 |---|---|
-| Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☐ **Puerta G0** |
-| Fase 1 | ☐ F1-1 · ☐ F1-2 · ☐ F1-3 · ☐ F1-4 · ☐ F1-5 · ☐ F1-6 · ☐ F1-7 · ☐ F1-8 · ☐ F1-9 · ☐ F1-10 · ☐ **Puerta G1** |
+| Fase 0 | ☑ F0-1 · ☑ F0-2 · ☑ F0-3 · ☑ F0-4 · ☑ **Puerta G0** |
+| Fase 1 | ☑ F1-1 · ☑ F1-2 · ☑ F1-3 · ☑ F1-4 · ☑ F1-5 · ☑ F1-6 · ☑ F1-7 · ☑ F1-8 · ☑ F1-9 · ☑ F1-10 · ☑ F1-11 · ☑ F1-12 · ☑ F1-13 · ☑ F1-14 · ☑ F1-15 · ☑ F1-16 · ☐ **Puerta G1** |
 | Fase 2 servidor | ☐ F2-1 · ☐ F2-2 · ☐ F2-3 · ☐ F2-4 · ☐ F2-5 · ☐ F2-6 · ☐ F2-7 · ☐ **Puerta G2** |
 | Fase 2 cliente | ☐ F2-8 · ☐ F2-9 · ☐ F2-10 · ☐ F2-11 · ☐ F2-12 · ☐ F2-13 · ☐ F2-14 · ☐ F2-15 · ☐ **Puerta G3** |
 | Fase 3 | ☐ F3-1 · ☐ F3-2 · ☐ F3-3 · ☐ F3-4 · ☐ F3-5 · ☐ F3-6 · ☐ F3-7 · ☐ **Puerta G4** |
@@ -87,6 +87,7 @@ En paralelo (el resto, en orden):
 | F2-10 | F2-11, F2-12, F2-13 |
 | F3-3 | F3-4, F3-5, F3-6 |
 | F4-1 | F4-2, F4-4 |
+| F1-13 | F1-14, F1-15 |
 
 ## 3. Contratos (no se cambian dentro de un paso)
 
@@ -117,8 +118,8 @@ Firmas que fija F1-1 y que usan todos los demás:
 type Base = { id: string; company: string; version: number; updatedBy: string; deleted: boolean; created: string; updated: string }
 type OrderStatus = 'pending' | 'delivered' | 'cancelled'      // "preparado" NO es un estado: se calcula
 type Measure = 'unit' | 'weight'
-type Customer, Order, OrderItem, Ticket      // = Base & campos de SPEC §3
-type CollectionName = 'customers' | 'orders' | 'order_items' | 'tickets'
+type Customer, Product, Order, OrderItem, Ticket      // = Base & campos de SPEC §3
+type CollectionName = 'customers' | 'products' | 'orders' | 'order_items' | 'tickets'
 
 // shared/weight.ts
 parseWeight(input: string, unit: 'g' | 'kg'): number | null   // gramos enteros. "750",'g' -> 750 ; "1,5",'kg' -> 1500 ; "750g" o "1,5 kg" mandan sobre unit
@@ -300,13 +301,84 @@ CI en verde en GitHub. Criterios de SPEC §7 fase 0 verificados.
 ### F1-9 · Datos de demo, instalación y GitHub Pages · `haiku`
 - **Lee:** SPEC §4.7, §7 fase 1, §8 "GitHub Pages".
 - **Archivos:** `src/demo/seed.ts`, `src/components/layout/{DemoBanner,InstallHint}.tsx`, `src/main.tsx`, `.github/workflows/pages.yml`, `src/i18n/{ca,es}/common.json`.
-- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (encargos repartidos por el mes actual con **varios para hoy y para mañana**, algunos importantes, algunos con artículos de "preparar el día anterior", pesos por debajo y por encima del kilo, la mayoría sin precio, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/pedidator/` y publica en Pages.
-- **Hecho cuando:** `npm run check` y `VITE_MODE=demo VITE_BASE=/pedidator/ npm run build` pasan.
+- **Tareas:** botones "Cargar datos de ejemplo" y "Borrar datos" en modo demo (encargos repartidos por el mes actual con **varios para hoy y para mañana**, algunos importantes, algunos con artículos de "preparar el día anterior", pesos por debajo y por encima del kilo, la mayoría sin precio, entregados y tickets); `navigator.storage.persist()` al arrancar; aviso de instalación en Safari de iOS cuando no está instalada; workflow que compila con `VITE_MODE=demo` y `VITE_BASE=/Pedidator/` y publica en Pages.
+- **Hecho cuando:** `npm run check` y `VITE_MODE=demo VITE_BASE=/Pedidator/ npm run build` pasan.
 
 ### F1-10 · Pruebas de extremo a extremo de la demo · `sonnet`
 - **Archivos:** `e2e/demo.spec.ts`.
 - **Tareas:** en modo demo: crear un encargo para hoy con dos artículos (uno por peso escrito en gramos) y verlo en el día; marcar sus artículos y ver que pasa a preparado y sube la barra de progreso; crear un encargo para mañana con un artículo de "preparar el día anterior" y verlo hoy en "Preparar hoy para mañana" y el color en el calendario de mañana; entregar un encargo y ver que se pliega en "Entregados"; crear ticket y marcarlo pagado; cambiar de idioma; recargar sin conexión y comprobar que los datos siguen.
 - **Hecho cuando:** `npm run e2e -- --trace off` pasa. Si un test descubre un fallo de la app, arréglalo solo si es de una línea; si no, descríbelo en el informe.
+
+### F1-11 · Catálogo de productos · `sonnet`
+_Añadido en la puerta G1 (27/11/2026) a partir de la prueba del usuario: la pregunta abierta 2 de SPEC §10 queda respondida. El contrato (`Product` en `shared/types.ts`, tabla `products` en la versión 2 de Dexie y `RecordOf` en `mutate.ts`) ya lo ha fijado el orquestador._
+- **Lee:** SPEC §3 `products` y `order_items` ("Preparar la víspera" y "Precio"), §5 puntos 3 y 9; `docs/design/README.md` y los bloques Field y OrderCard de `docs/design/components.css` (sin maqueta propia: la lista copia el patrón de `CustomersPage` y el formulario usa los bloques Field, como la ficha de `screens/Cliente.dc.html`).
+- **Archivos:** `src/data/db.ts`, `src/data/repo/{products,orders}.ts` (+ tests), `src/data/hooks.ts` (+ test), `src/pages/{ProductsPage,ProductPage}.tsx` (+ tests), `src/routes.tsx`, `src/components/layout/MainNav.tsx`, `src/components/orders/{ItemsEditor,ItemEditorRow,PriceDisclosure}.tsx`, `src/pages/OrderFormPage.tsx` (+ test), `src/demo/seed.ts`, `src/i18n/{ca,es}/{products,common}.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `db.ts`: en la versión 2, un `upgrade` que rellena `products` con un producto por `nameKey` distinto de los `order_items` no borrados (del último uso: `name`, `measure`, `prepDayBefore`; sin precio). Por `mutate`/outbox no: es un relleno local.
+  2. `repo/products.ts`: `findProductByName`, `createProduct`, `updateProduct` (recalcula `nameKey`; nombre vacío o ya usado por otro producto vivo → error), `deleteProduct` (`softDelete`), `ensureProductsForItems(items)` (crea los que no existan por `nameKey`, con `measure` y `prepDayBefore`, sin precio). Todo por `mutate.ts`.
+  3. `repo/orders.ts`: al guardar un encargo, `ensureProductsForItems` en la misma transacción.
+  4. `hooks.ts`: `queryProducts`/`useProducts` (vivos, por `nameKey`) y `useProduct(id)`; `querySuggestItems` pasa a salir **solo** del catálogo y devuelve también `unitPriceCents` (el campo `lastUsed` desaparece si nadie lo usa).
+  5. Pantallas `/products` (buscador por `nameKey`, tarjetas compactas: nombre, "Unidades"/"Peso", insignia `prep` si `prepDayBefore`; sin precio; botón "Nuevo producto"; mensaje centrado si no hay) y `/products/new`, `/products/:id` (nombre, unidades/peso, "Preparar el día anterior", desplegable "Precio" cerrado con precio por unidad o por kilo con `parseMoney`, notas; "Guardar" con `SafeForm`; "Borrar producto" con confirmación en `AppDialog`). Entrada "Productos" en `MainNav` (icono de `lucide-react`) tras Clientes.
+  6. Formulario de encargo: al elegir una sugerencia se proponen `measure`, `prepDayBefore` y, si el producto tiene precio y el artículo no, `unitPriceCents`.
+  7. `seed.ts`: crea el catálogo de la demo (los nombres que usa, algunos con precio) y "Borrar datos" lo borra también.
+- **No hagas:** relación del artículo con el producto; cambiar encargos ya hechos al editar un producto; mostrar precios en la lista ni en el día; nada de servidor.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el relleno de la versión 2 crea un producto por nombre (`"Entrecot"` y `" entrecot "` → uno); guardar un encargo con un nombre nuevo crea el producto y con uno existente no lo duplica; editar un producto no cambia los artículos ya guardados; un producto borrado deja de salir en las sugerencias; elegir una sugerencia con precio lo propone en el artículo; renombrar a un nombre ya usado da error. En `e2e/demo.spec.ts`, un caso: abrir Productos desde el menú, editar uno y ver el cambio en la sugerencia del formulario.
+
+### F1-12 · Entregar y dejar a deber · `sonnet`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: responde la pregunta abierta 1 de SPEC §10._
+- **Lee:** SPEC §5 punto 2 ("Entregar") y punto 4, §3 `tickets`; bloques Field y Button de `docs/design/components.css` (sin maqueta: contenido del diálogo con los bloques Field dentro de `AppDialog`, como el diálogo de nuevo ticket).
+- **Archivos:** `src/components/day/{OrderCard,DeliverDialog}.tsx` (+ test de `DeliverDialog`), `src/data/repo/orders.ts` (+ test), `src/pages/DayPage.test.tsx`, `src/i18n/{ca,es}/day.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `repo/orders.ts`: `deliverOrderWithTicket(id, { amountCents, notes })` → entrega el encargo y crea el ticket pendiente del mismo cliente en **una** `writeTx` (usa `createTicket` de `repo/tickets.ts` sin cambiarlo). Error si `amountCents` no es entero > 0.
+  2. `DeliverDialog`: se abre siempre al pulsar "Entregar". Aviso si no está preparado del todo (con `orderProgress`). Botones "Entregar", "Entregar y dejar a deber", "Volver". El segundo muestra importe (`inputMode="decimal"`, `parseMoney`, prellenado con `orderTotal` del encargo si no es `null`) y notas (prellenadas con fecha y hora de recogida en Madrid), y el botón "Entregar y crear ticket", que no hace nada con importe vacío o inválido y lo indica. Enter no envía (`SafeForm`).
+  3. `OrderCard` usa el diálogo en lugar de la confirmación actual.
+- **No hagas:** relación del ticket con el encargo; foto en este diálogo; marcar "pagado" en el encargo.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: "Entregar" pide siempre confirmación y "Volver" no cambia nada; "Entregar" entrega sin crear ticket; "Entregar y dejar a deber" con importe crea un ticket pendiente con ese importe, cliente y notas y entrega el encargo; sin importe no entrega; un encargo con precios prellena el importe; si la creación del ticket falla, el encargo no queda entregado. En `e2e/demo.spec.ts`: entregar dejando a deber y ver el ticket en Tickets.
+
+### F1-13 · Tickets pagados · `haiku`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario: consultar los tickets ya pagados._
+- **Lee:** SPEC §5 punto 4 entero, §3 `tickets`; `docs/design/README.md` y la maqueta `docs/design/screens/Tickets.dc.html` (la pestaña Pagados no tiene maqueta propia: misma tarjeta de ticket y el buscador y filtros de `src/pages/ArchivePage.tsx`).
+- **Archivos:** `src/pages/TicketsPage.tsx` (+ test), `src/components/tickets/PaidTicketList.tsx` (+ test), `src/data/hooks.ts` (+ test), `src/i18n/{ca,es}/tickets.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `hooks.ts`: `queryPaidTickets(db, { text, from, to })` y `usePaidTickets(...)`: tickets no borrados con `paid`, filtro por `nameKey` del cliente que contenga el texto y por `paidAt` dentro del rango de días de Madrid (usa `src/lib/dates.ts`), orden por `paidAt` descendente, con el nombre del cliente.
+  2. `TicketsPage`: pestañas "Pendientes" / "Pagados" con `?view=paid` en la URL. La vista de pendientes no cambia.
+  3. `PaidTicketList`: buscador, fechas "desde"/"hasta", total de lo filtrado (`formatMoney`), tarjetas con cliente, importe, fecha del ticket, fecha de pago, notas y miniatura (abre `PhotoViewer`); "Volver a pendiente" con confirmación en `AppDialog` usando `markTicketUnpaid` de `repo/tickets.ts`; mensaje centrado si no hay ninguno.
+- **No hagas:** cambiar `repo/tickets.ts`, el diálogo de nuevo ticket ni la vista de pendientes.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: el filtro por cliente y por fechas (un pago a las 00:30 de Madrid cuenta en ese día); el orden por `paidAt`; el total filtrado; "Volver a pendiente" lo devuelve a la pestaña Pendientes. En `e2e/demo.spec.ts`: marcar un ticket pagado, verlo en Pagados y devolverlo a pendiente.
+
+### F1-14 · Ficha del cliente y explorar · `sonnet`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 puntos 2 ("Vista Archivo"), 4 y 5; `docs/design/README.md` y la maqueta `docs/design/screens/Cliente.dc.html`.
+- **Archivos:** `src/pages/CustomerPage.tsx` (+ test), `src/pages/ArchivePage.tsx` (+ test), `src/components/tickets/{TicketThumb,TicketGroup,PaidTicketList}.tsx` (+ test de `PaidTicketList`), `src/data/hooks.ts` (+ test), `src/i18n/{ca,es}/{customers,archive,tickets}.json`, `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `TicketThumb.tsx`: la miniatura de un ticket que hoy está duplicada en `TicketGroup` (privada) y en `PaidTicketList` (`PaidThumb`), sacada a un componente común que usan los dos sin cambiar su aspecto.
+  2. `hooks.ts`: `ArchiveFilter` y `PaidTicketFilter` admiten `customerId` (filtra por id; se combina con texto y fechas).
+  3. `ArchivePage` y `PaidTicketList`: filtros en la URL (`customer`, `from`, `to`, y el texto como `q`) con `useSearchParams`; con `customer`, chip con el nombre del cliente y botón para quitarlo.
+  4. `CustomerPage`: de entrada, encargos pendientes (recogida ascendente) y tickets pendientes con su total. "Ver entregados" y "Ver pagados" despliegan los 5 últimos (con el total pagado en los tickets) y un botón "Explorar" que enlaza a `/archive?customer=<id>` y `/tickets?view=paid&customer=<id>`. Tickets con importe, notas, fecha del ticket, fecha de pago, `TicketThumb` (abre `PhotoViewer`), "Marcar como pagado" (`markTicketPaid`) y "Volver a pendiente" con confirmación en `AppDialog` (`markTicketUnpaid`). Mensaje de vacío en cada bloque.
+- **No hagas:** cambiar `repo/*`; tocar el calendario ni la pantalla del día (es F1-15).
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: la ficha muestra de entrada solo lo pendiente; "Ver entregados"/"Ver pagados" muestran como mucho 5, los más recientes; "Marcar como pagado" lo saca de pendientes; "Volver a pendiente" pide confirmación; `/archive?customer=<id>&from=…&to=…` filtra por cliente y fechas y quitar el chip quita el filtro de cliente; lo mismo en Pagados. En `e2e/demo.spec.ts`: desde una ficha, "Ver pagados" → "Explorar" abre Pagados filtrado por ese cliente.
+
+### F1-15 · Calendario desplegable en móvil · `haiku`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 punto 2 (calendario); bloque Calendar de `docs/design/components.css`; maqueta `docs/design/screens/Main.dc.html`.
+- **Archivos:** `src/pages/DayPage.tsx` (+ test), `src/components/day/{WeekStrip,MonthCalendar}.tsx`, `src/i18n/{ca,es}/day.json`.
+- **Tareas:** en móvil (por debajo de `bp-tablet`), un botón junto a la semana ("Ver mes" / "Ver semana", con icono y `aria-expanded`) cambia entre `WeekStrip` y `MonthCalendar` con las mismas marcas y la misma selección de día; la elección se recuerda en el dispositivo (`localStorage`, como "Mostrar entregados"). Elegir un día en el mes lo abre y deja el mes desplegado. En tablet no cambia nada.
+- **No hagas:** cambiar las marcas ni cómo se calculan; tocar la ficha del cliente (es F1-14).
+- **Hecho cuando:** `npm run check` pasa, con tests de: el botón cambia de semana a mes y vuelta; la elección se recuerda al volver a montar la página; elegir un día desde el mes navega a ese día.
+
+### F1-16 · Calendario que se arrastra · `sonnet`
+_Añadido en la puerta G1 (28/11/2026) a partir de la prueba del usuario._
+- **Lee:** SPEC §5 punto 2 (calendario); bloque Calendar de `docs/design/components.css`; maquetas `docs/design/screens/Main.dc.html` y `DiaTablet.dc.html`.
+- **Archivos:** `src/components/day/{WeekStrip,MonthCalendar}.tsx`, `src/pages/DayPage.tsx` (+ test), `src/lib/dates.ts` (+ test), `src/data/hooks.ts` (+ test), `e2e/demo.spec.ts`.
+- **Tareas:**
+  1. `dates.ts` (funciones puras): `weeksAround(day, n)` (lunes de las `n` semanas antes y después de la del día), `monthsAround(month, n)`, `monthOfWeek(weekMonday, selectedDay)` (el mes del día elegido si está en esa semana; si no, el del jueves de la semana) y `weekOfMonth(month, selectedDay)` (lunes de la semana del día elegido si está en ese mes; si no, de la semana del día 1).
+  2. `hooks.ts`: `queryRangeMarks(db, fromDay, toDay, options)` / `useRangeMarks` con las mismas marcas y opciones que `queryMonthMarks` (que se queda como está o pasa a usarla).
+  3. `WeekStrip`: contenedor con desplazamiento horizontal y `scroll-snap` (cada semana ocupa todo el ancho), ventana de 26 semanas a cada lado de la del día elegido. Al montar y cuando cambia el día elegido, se coloca sin animación en su semana. Arrastrar solo cambia la semana visible (rótulo encima "1 – 7 de diciembre"), no el día ni la URL. Tocar un día llama a `onSelect`. Avisa de la semana visible a la página (`onVisibleWeekChange`).
+  4. `MonthCalendar`: lo mismo en vertical, por meses (título de cada mes, ventana de 12 meses a cada lado, el contenedor mide un mes de alto), en móvil y en tablet. Avisa del mes visible (`onVisibleMonthChange`).
+  5. `DayPage`: pide las marcas de toda la ventana con `useRangeMarks`; "Ver mes" abre `monthOfWeek(semana visible, día)` y "Ver semana" `weekOfMonth(mes visible, día)`. Los botones de anterior/siguiente día y "Hoy" siguen igual.
+  6. Sin dependencias nuevas: desplazamiento nativo con CSS `scroll-snap` (táctil en móvil y iPad; rueda o trackpad en escritorio). Accesible: los días siguen siendo botones con su etiqueta; nada de `aria-hidden` en las semanas fuera de vista que impida llegar con el teclado.
+- **No hagas:** cambiar cómo se calculan las marcas; seleccionar un día al arrastrar; tocar otras pantallas.
+- **Hecho cuando:** `npm run check` y `npm run e2e -- --trace off` pasan, con tests de: las cuatro funciones de `dates.ts` (incluidas semanas que cruzan de mes y de año); `queryRangeMarks` da lo mismo que `queryMonthMarks` en un mes; la semana del día elegido está en la ventana y tocar un día de otra semana lo selecciona. En `e2e/demo.spec.ts`, con viewport de móvil: desplazar la semana (cambiando `scrollLeft`) cambia el rótulo y no la URL; "Ver mes" abre el mes de esa semana.
 
 ### Puerta G1
 - Revisión de código de toda la fase (`/code-review`).
@@ -336,7 +408,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Tareas:**
   1. Todas las colecciones de SPEC §3 con sus campos, campos comunes y `autodate`. Reglas de lectura estándar de POCKETBASE.md §5; reglas de escritura `null` en **todas**. `companies`: lectura con `id = @request.auth.company`. `users`: ampliación de POCKETBASE.md §4.
   2. `change_log`: lectura por empresa. `sync_ops` y `customer_aliases`: todas las reglas `null`.
-  3. Índices: único parcial de `customers`; (`company`, `updated`) en las cuatro colecciones sincronizables; `order_items(order)`; `change_log(company, recordId)` y `(company, orderId)`; único `sync_ops(user, opId)`; único `customer_aliases(aliasId)`.
+  3. Índices: único parcial de `customers` y de `products`; (`company`, `updated`) en las cinco colecciones sincronizables; `order_items(order)`; `change_log(company, recordId)` y `(company, orderId)`; único `sync_ops(user, opId)`; único `customer_aliases(aliasId)`.
   4. `tickets.photo` protegido con `thumbs: ["300x0"]`, 5 MB, JPEG/PNG.
 - **Hecho cuando:** `npm run test:integration` pasa con tests de: registro público 403; un usuario no puede hacer `PATCH` de su `role` ni de su `company` (403); `POST` REST a cada colección sincronizable 403; login de usuario inactivo falla; un usuario lista solo los usuarios de su empresa.
 
@@ -356,7 +428,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Tareas:** `POST /api/sync/push` como adaptador fino sobre `shared/sync`:
   1. `requireAuth("users")` + comprobar `active`. Máximo 200 operaciones por petición.
   2. Por operación, en su propia transacción: empresa (la del usuario; el `platform_admin` usa la de la operación, que debe existir) → `validateOp` → idempotencia por (`user`, `opId`) → cargar el registro → `decideOp` → aplicar → `change_log` → `sync_ops`.
-  3. El servidor fija `version`, `updatedBy`, `company`; en `customers` recalcula `nameKey`.
+  3. El servidor fija `version`, `updatedBy`, `company`; en `customers` y `products` recalcula `nameKey`.
   4. `change_log` con `diff`, `kind`, `merged`, `forced`, `overwrote`, `opId`, `deviceId`, y `orderId` en los cambios de `order_items`.
   5. Respuesta con el formato de SPEC §4.3. En `conflict`, `updatedByName`.
   6. Una operación rechazada o en conflicto no impide procesar las demás.
@@ -368,7 +440,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
 - **Archivos:** `pb/pb_hooks/sync.pb.js`, `pb/pb_hooks/upload.pb.js`, `tests/integration/{push-relations,upload}.test.ts`.
 - **Tareas:**
   1. Antes de validar relaciones, traducir los ids de cliente por `customer_aliases`. Toda relación debe existir y ser de la misma empresa; si no, `forbidden`.
-  2. `create` de `customers` con `nameKey` existente (no borrado) en la empresa → `ok` con `mergedInto` + alta del alias, sin crear registro.
+  2. `create` de `customers` con `nameKey` existente (no borrado) en la empresa → `ok` con `mergedInto` + alta del alias, sin crear registro. Igual en `products`, sin alias.
   3. `delete` de un pedido: borrado lógico de sus artículos en la misma transacción, cada uno con su `change_log`.
   4. `POST /api/sync/upload/{collection}/{id}` (POCKETBASE.md §8): solo `tickets`/`photo`; usuario activo y misma empresa; `version++`, `change_log`, devuelve el registro.
 - **Hecho cuando:** `npm run test:integration` pasa con tests de: lote con "crear cliente duplicado" + "crear pedido con el id duplicado" → el pedido queda apuntando al cliente existente; relación a un cliente de otra empresa → `forbidden`; cascada; subida correcta; subida a ticket de otra empresa 403; `PATCH` REST con archivo 403; foto sin token 404, con token de la empresa 200, con token de otra empresa 404.

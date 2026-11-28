@@ -1,5 +1,47 @@
 {
   "app": {
     "name": "Pedidator"
+  },
+  "nav": {
+    "label": "Secciones",
+    "day": "Día",
+    "tickets": "Tickets",
+    "customers": "Clientes",
+    "products": "Productos",
+    "archive": "Archivo"
+  },
+  "language": {
+    "label": "Idioma",
+    "ca": "Català",
+    "es": "Castellano"
+  },
+  "brand": {
+    "label": "Color de la empresa",
+    "neutral": "Neutro",
+    "butcher": "Carnicería",
+    "fishmonger": "Pescadería",
+    "greengrocer": "Frutería",
+    "bakery": "Panadería"
+  },
+  "dialog": {
+    "close": "Cerrar"
+  },
+  "session": {
+    "error": "No se pudo abrir la base de datos local."
+  },
+  "demo": {
+    "notice": "MODO DEMO, los datos solo están en este dispositivo",
+    "load": "Cargar datos de ejemplo",
+    "clear": "Borrar datos",
+    "clearTitle": "¿Borrar los datos de la demo?",
+    "clearBody": "Se borran todos los encargos, tickets y productos de este dispositivo. Los clientes se mantienen.",
+    "confirmClear": "Borrar",
+    "cancel": "Cancelar",
+    "error": "No se pudo completar la acción."
+  },
+  "install": {
+    "title": "Instala Pedidator en la pantalla de inicio",
+    "body": "Así funciona sin conexión y se abre como una app. Toca el botón Compartir de Safari y elige «Añadir a pantalla de inicio».",
+    "dismiss": "Ocultar"
   }
 }

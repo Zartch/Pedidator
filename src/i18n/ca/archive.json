@@ -1,0 +1,20 @@
+{
+  "title": "Arxiu",
+  "search": {
+    "label": "Cerca per client",
+    "placeholder": "Nom del client"
+  },
+  "range": {
+    "from": "Des de",
+    "to": "Fins a",
+    "clear": "Totes les dates"
+  },
+  "state": {
+    "delivered": "Entregat",
+    "cancelled": "Cancel·lat"
+  },
+  "empty": "No hi ha encàrrecs arxivats amb aquest filtre.",
+  "noCustomer": "Client sense nom",
+  "noItems": "Sense articles",
+  "removeCustomer": "Treure el filtre de client"
+}

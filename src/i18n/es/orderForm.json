@@ -1,0 +1,79 @@
+{
+  "title": "Encargo",
+  "titleNew": "Nuevo encargo",
+  "titleEdit": "Editar encargo",
+  "loading": "Cargando…",
+  "notFound": "No se ha encontrado el encargo",
+  "backToDay": "Volver a hoy",
+  "dateTimeError": "Indica el día y la hora de recogida",
+  "whoWhen": "Quién y cuándo",
+  "customer": {
+    "label": "Cliente",
+    "hint": "Elige un cliente o escribe su nombre",
+    "create": "Crear cliente «{{name}}»",
+    "error": "Indica el cliente"
+  },
+  "date": "Día de recogida",
+  "time": "Hora",
+  "priority": {
+    "label": "Prioridad",
+    "normal": "Normal",
+    "important": "Importante"
+  },
+  "notes": "Notas del encargo",
+  "items": {
+    "title": "Artículos",
+    "add": "Añadir otro artículo",
+    "errorName": "El artículo necesita un nombre",
+    "errorNone": "Añade al menos un artículo",
+    "errorWeight": "Revisa el peso de algún artículo",
+    "errorPrice": "Revisa el precio de algún artículo"
+  },
+  "item": {
+    "name": "Artículo",
+    "measure": "Se pide por",
+    "units": "Unidades",
+    "weight": "Peso",
+    "quantity": "Cantidad",
+    "notes": "Notas",
+    "prep": "Preparar el día anterior",
+    "done": "Preparado",
+    "up": "Subir el artículo",
+    "down": "Bajar el artículo",
+    "remove": "Borrar el artículo",
+    "number": "Artículo {{n}}"
+  },
+  "weight": {
+    "unit": "Unidad",
+    "equals": "= {{value}}",
+    "emptyHint": "Escribe gramos o kilos",
+    "badGrams": "En gramos, sin decimales",
+    "badKilos": "En kilos, 3 decimales como mucho"
+  },
+  "price": {
+    "toggle": "Precio (opcional)",
+    "unitPrice": "Precio por unidad",
+    "kiloPrice": "Precio por kilo",
+    "realWeight": "Peso real",
+    "invalid": "Precio no válido"
+  },
+  "total": {
+    "label": "Total",
+    "estimated": "≈ {{amount}}",
+    "unpriced_one": "{{count}} artículo sin precio",
+    "unpriced_other": "{{count}} artículos sin precio"
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "discard": "Cancelar",
+    "cancelOrder": "Cancelar encargo",
+    "errorSave": "No se ha podido guardar el encargo"
+  },
+  "cancelDialog": {
+    "title": "Cancelar el encargo",
+    "text": "El encargo pasará al archivo como cancelado.",
+    "confirm": "Sí, cancelarlo",
+    "back": "Volver"
+  }
+}

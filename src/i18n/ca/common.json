@@ -1,5 +1,47 @@
 {
   "app": {
     "name": "Pedidator"
+  },
+  "nav": {
+    "label": "Seccions",
+    "day": "Dia",
+    "tickets": "Tickets",
+    "customers": "Clients",
+    "products": "Productes",
+    "archive": "Arxiu"
+  },
+  "language": {
+    "label": "Idioma",
+    "ca": "Català",
+    "es": "Castellano"
+  },
+  "brand": {
+    "label": "Color de l'empresa",
+    "neutral": "Neutre",
+    "butcher": "Carnisseria",
+    "fishmonger": "Peixateria",
+    "greengrocer": "Fruiteria",
+    "bakery": "Fleca"
+  },
+  "dialog": {
+    "close": "Tanca"
+  },
+  "session": {
+    "error": "No s'ha pogut obrir la base de dades local."
+  },
+  "demo": {
+    "notice": "MODE DEMO, les dades només són en aquest dispositiu",
+    "load": "Carrega dades d'exemple",
+    "clear": "Esborra les dades",
+    "clearTitle": "Esborrar les dades de la demo?",
+    "clearBody": "S'esborren tots els encàrrecs, tickets i productes d'aquest dispositiu. Els clients es mantenen.",
+    "confirmClear": "Esborra",
+    "cancel": "Cancel·la",
+    "error": "No s'ha pogut completar l'acció."
+  },
+  "install": {
+    "title": "Instal·la Pedidator a la pantalla d'inici",
+    "body": "Així funciona sense connexió i s'obre com una app. Toca el botó Compartir de Safari i tria «Afegeix a la pantalla d'inici».",
+    "dismiss": "Amaga"
   }
 }

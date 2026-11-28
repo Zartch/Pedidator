@@ -1,0 +1,31 @@
+{
+  "title": "Productes",
+  "new": "Nou producte",
+  "newTitle": "Nou producte",
+  "searchLabel": "Cerca de producte",
+  "searchPlaceholder": "Nom del producte",
+  "empty": "Encara no hi ha productes.",
+  "noMatches": "Cap producte coincideix amb la cerca.",
+  "loading": "Carregant…",
+  "back": "Tornar a productes",
+  "notFound": "Producte no trobat",
+  "name": "Nom",
+  "measure": "Es demana per",
+  "units": "Unitats",
+  "weight": "Pes",
+  "prep": "Preparar el dia abans",
+  "prepBadge": "Vigília",
+  "notes": "Notes",
+  "save": "Desa",
+  "delete": "Esborra el producte",
+  "errorName": "El producte necessita un nom",
+  "errorDuplicate": "Ja existeix un producte amb aquest nom",
+  "errorPrice": "Preu no vàlid",
+  "saveError": "No s'han pogut desar els canvis.",
+  "deleteDialog": {
+    "title": "Vols esborrar el producte?",
+    "text": "Deixarà de sortir als suggeriments. Els encàrrecs ja fets no canvien.",
+    "back": "Tornar",
+    "confirm": "Esborra"
+  }
+}

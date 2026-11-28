@@ -1,0 +1,91 @@
+{
+  "title": "Dia",
+  "header": {
+    "previous": "Dia anterior",
+    "next": "Dia següent",
+    "today": "Avui"
+  },
+  "calendar": {
+    "week": "Setmana del {{from}} al {{to}}",
+    "month": "Calendari de {{month}}",
+    "monthPrevious": "Mes anterior",
+    "monthNext": "Mes següent",
+    "dow": {
+      "mon": "Dl",
+      "tue": "Dt",
+      "wed": "Dc",
+      "thu": "Dj",
+      "fri": "Dv",
+      "sat": "Ds",
+      "sun": "Dg"
+    },
+    "legend": {
+      "orders": "Amb encàrrecs",
+      "important": "Important",
+      "prep": "Preparar la vigília"
+    },
+    "mark": {
+      "orders": "amb encàrrecs",
+      "important": "important",
+      "prep": "preparar la vigília"
+    },
+    "showMonth": "Veure el mes",
+    "showWeek": "Veure la setmana",
+    "showDelivered": "Mostra els lliurats"
+  },
+  "progress": {
+    "label": "Encàrrecs preparats",
+    "title_one": "{{prepared}} de {{count}} encàrrec preparat",
+    "title_other": "{{prepared}} de {{count}} encàrrecs preparats",
+    "empty": "Cap encàrrec per a aquest dia",
+    "toPrepare": "{{count}} per preparar",
+    "delivered_one": "{{count}} lliurat",
+    "delivered_other": "{{count}} lliurats",
+    "monthDelivered": "Lliurats al mes de {{month}}: {{count}}"
+  },
+  "next": {
+    "label": "Propera recollida"
+  },
+  "prep": {
+    "title": "Preparar avui per a demà",
+    "count": "{{done}}/{{total}}"
+  },
+  "orders": {
+    "headingToday": "Encàrrecs d'avui, per hora de recollida",
+    "heading": "Encàrrecs del dia, per hora de recollida",
+    "empty": "No hi ha encàrrecs aquest dia",
+    "new": "Nou encàrrec"
+  },
+  "card": {
+    "toPrepare": "Per preparar · {{done}}/{{total}}",
+    "prepared": "Preparat",
+    "delivered": "Lliurat",
+    "important": "Important",
+    "noItems": "Sense articles",
+    "deliver": "Lliurar",
+    "unknownCustomer": "Client sense nom",
+    "next": "Propera recollida"
+  },
+  "item": {
+    "prepDayBefore": "Dia anterior",
+    "late": "Calia preparar-ho ahir"
+  },
+  "deliverDialog": {
+    "title": "Lliurar l'encàrrec",
+    "message": "Aquest encàrrec encara no està preparat del tot ({{done}} de {{total}} articles). Vols lliurar-lo igualment?",
+    "ready": "L'encàrrec està preparat.",
+    "deliver": "Lliurar",
+    "owe": "Lliurar i deixar a deure",
+    "back": "Tornar",
+    "createTicket": "Lliurar i crear ticket",
+    "amount": "Import",
+    "notes": "Notes",
+    "defaultNotes": "Encàrrec del {{date}} {{time}}",
+    "errorAmount": "Indica un import vàlid",
+    "errorSave": "No s'ha pogut lliurar l'encàrrec"
+  },
+  "deliveredGroup": {
+    "title": "Lliurats ({{count}})",
+    "reopen": "Torna a pendent"
+  }
+}
