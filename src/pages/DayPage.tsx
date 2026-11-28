@@ -36,11 +36,11 @@ import {
   monthOfWeek,
   nextDay,
   previousDay,
-  todayMadrid,
   weekMonday,
   weekOfMonth,
 } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { useTodayMadrid } from '@/lib/useTodayMadrid'
 
 const SHOW_DELIVERED_KEY = 'pedidator.showDelivered'
 const PHONE_MONTH_KEY = 'pedidator.calendarMonth'
@@ -87,7 +87,7 @@ export default function DayPage() {
   const locale = dateLocale(i18n.language)
   const navigate = useNavigate()
   const { date } = useParams()
-  const today = todayMadrid()
+  const today = useTodayMadrid()
   const valid = date === undefined || isDay(date)
   const day = date !== undefined && valid ? date : today
   const isToday = day === today
