@@ -9,6 +9,7 @@ import { useCustomer, usePaidTickets, type PaidTicketRow } from '@/data/hooks'
 import { markTicketUnpaid } from '@/data/repo/tickets'
 import { dateLocale, dayToDisplayDate } from '@/lib/dates'
 import { AppDialog } from '@/components/ui/AppDialog'
+import { useActionRunner } from '@/components/ui/ActionError'
 import { Button } from '@/components/ui/Button'
 import { PhotoViewer } from './PhotoViewer'
 import { TicketThumb } from './TicketThumb'
@@ -56,6 +57,7 @@ export function PaidTicketList() {
   }
   const [viewing, setViewing] = useState<string | null>(null)
   const [returning, setReturning] = useState<PaidTicketRow | null>(null)
+  const { run, alert } = useActionRunner()
 
   const rows = usePaidTickets({
     text: text.trim() || undefined,
@@ -66,11 +68,11 @@ export function PaidTicketList() {
   const filtered = Boolean(text.trim() || from || to || customerId)
   const total = (rows ?? []).reduce((sum, r) => sum + r.ticket.amountCents, 0)
 
-  async function confirmReturn() {
+  function confirmReturn() {
     if (!returning) return
     const id = returning.ticket.id
     setReturning(null)
-    await markTicketUnpaid(id)
+    run(() => markTicketUnpaid(id))
   }
 
   return (
@@ -176,6 +178,8 @@ export function PaidTicketList() {
         )
       })}
 
+      {alert}
+
       <AppDialog
         open={returning !== null}
         title={t('paid.backTitle')}
@@ -183,7 +187,7 @@ export function PaidTicketList() {
         footer={
           <>
             <Button onClick={() => setReturning(null)}>{t('paid.cancel')}</Button>
-            <Button variant="primary" onClick={() => void confirmReturn()}>
+            <Button variant="primary" onClick={confirmReturn}>
               {t('paid.backConfirm')}
             </Button>
           </>

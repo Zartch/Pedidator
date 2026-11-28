@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ArrowLeft, CircleCheck, CircleX, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
+import { useActionRunner } from '@/components/ui/ActionError'
 import { Button } from '@/components/ui/Button'
 import { AppDialog } from '@/components/ui/AppDialog'
 import { PhotoViewer } from '@/components/tickets/PhotoViewer'
@@ -49,8 +50,12 @@ export default function CustomerPage() {
   const { t, i18n } = useTranslation('customers')
   const { id = '' } = useParams()
   const customer = useCustomer(id)
-  const orders = useCustomerOrders(id)
-  const tickets = useCustomerTickets(id)
+  // useLiveQuery keeps the previous result while `id` changes: anything not of this
+  // customer counts as still loading, so A's data is never shown under B's name.
+  const rawOrders = useCustomerOrders(id)
+  const rawTickets = useCustomerTickets(id)
+  const orders = rawOrders?.every((o) => o.customer === id) ? rawOrders : undefined
+  const tickets = rawTickets?.every((x) => x.customer === id) ? rawTickets : undefined
   const locale: Locale = i18n.language === 'es' ? 'es' : 'ca'
 
   // undefined = loading; null = unknown, deleted or merged customer.
@@ -169,17 +174,18 @@ function TicketsBlock({
   const [viewing, setViewing] = useState<string | null>(null)
   const [returning, setReturning] = useState<Ticket | null>(null)
   const panelId = useId()
+  const { run, alert } = useActionRunner()
   const pending = (tickets ?? []).filter((x) => !x.paid)
   const paidAll = (tickets ?? []).filter((x) => x.paid)
   const paid = [...paidAll]
     .sort((a, b) => (b.paidAt ?? '').localeCompare(a.paidAt ?? ''))
     .slice(0, RECENT)
 
-  async function confirmReturn() {
+  function confirmReturn() {
     if (!returning) return
     const id = returning.id
     setReturning(null)
-    await markTicketUnpaid(id)
+    run(() => markTicketUnpaid(id))
   }
 
   return (
@@ -203,13 +209,14 @@ function TicketsBlock({
                 locale={locale}
                 onOpenPhoto={setViewing}
                 action={
-                  <Button onClick={() => void markTicketPaid(ticket.id)}>{t('markPaid')}</Button>
+                  <Button onClick={() => run(() => markTicketPaid(ticket.id))}>{t('markPaid')}</Button>
                 }
               />
             </li>
           ))}
         </ul>
       )}
+      {alert}
       <div>
         <Button aria-expanded={open} aria-controls={panelId} onClick={() => setOpen(!open)}>
           {open ? t('hidePaid') : t('showPaid')}
@@ -254,7 +261,7 @@ function TicketsBlock({
         footer={
           <>
             <Button onClick={() => setReturning(null)}>{t('cancel')}</Button>
-            <Button variant="primary" onClick={() => void confirmReturn()}>
+            <Button variant="primary" onClick={confirmReturn}>
               {t('backConfirm')}
             </Button>
           </>

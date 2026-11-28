@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import '@/i18n'
 import CustomerPage from './CustomerPage'
@@ -193,5 +193,62 @@ describe('CustomerPage pending-first file', () => {
     fireEvent.click(within(again).getByRole('button', { name: 'Torna a pendent' }))
     await screen.findByText('Pendent: 8,00 €')
     expect((await requireSession().db.tickets.toArray())[0].paid).toBe(false)
+  })
+})
+
+describe('CustomerPage switching customers', () => {
+  it('never shows the orders or tickets of A under the name of B', async () => {
+    const a = await createOrder(
+      { customer: customerId, pickupAt: '2026-12-20T10:00:00.000Z' },
+      [{ name: 'Pollo', measure: 'unit', quantity: 1 }],
+    )
+    await createTicket({ customer: customerId, amountCents: 1250 })
+    const bId = (await getOrCreateCustomerByName('Cal Berta')).id
+    const b = await createOrder(
+      { customer: bId, pickupAt: '2026-12-21T10:00:00.000Z' },
+      [{ name: 'Conill', measure: 'unit', quantity: 1 }],
+    )
+    // Many orders make B's list slower than B's customer record, so A's lists linger.
+    await requireSession().db.orders.bulkAdd(
+      Array.from({ length: 300 }, (_, i) => ({
+        ...b.order,
+        id: `bulk${String(i).padStart(10, '0')}`,
+        status: 'delivered' as const,
+      })),
+    )
+    function GoB() {
+      const navigate = useNavigate()
+      return (
+        <button type="button" onClick={() => void navigate(`/customers/${bId}`)}>
+          goB
+        </button>
+      )
+    }
+    render(
+      <MemoryRouter initialEntries={[`/customers/${customerId}`]}>
+        <GoB />
+        <Routes>
+          <Route path="/customers/:id" element={<CustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await screen.findByText('Pendent: 12,50 €')
+    expect(orderHrefs()).toEqual([`/orders/${a.order.id}`])
+
+    // Record every state the page goes through while B loads.
+    const seen: string[] = []
+    const record = () => {
+      if (screen.queryByRole('heading', { name: 'Cal Berta' })) {
+        seen.push(...orderHrefs().map(String), ...(screen.queryByText('Pendent: 12,50 €') ? ['A-ticket'] : []))
+      }
+    }
+    const observer = new MutationObserver(record)
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true })
+    fireEvent.click(screen.getByText('goB'))
+    record()
+    await waitFor(() => expect(orderHrefs()).toEqual([`/orders/${b.order.id}`]))
+    observer.disconnect()
+    expect(seen).not.toContain(`/orders/${a.order.id}`)
+    expect(seen).not.toContain('A-ticket')
   })
 })

@@ -163,7 +163,7 @@ export function TicketDialog({ onClose }: Props) {
               aria-invalid={errors.amount ? true : undefined}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <span className="pr-3 text-ink-muted">€</span>
+            <span className="pr-3 text-ink-muted">{t('dialog.currency')}</span>
           </div>
           {errors.amount && <span className={ERROR}>{t('dialog.errorAmount')}</span>}
         </div>

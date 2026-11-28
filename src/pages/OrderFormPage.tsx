@@ -6,6 +6,7 @@ import { madridDay } from '@shared/progress'
 import type { OrderItem } from '@shared/types'
 import { useOrderDetail, type DayOrder } from '@/data/hooks'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
+import type { ItemInput } from '@/data/repo/orderItems'
 import { cancelOrder, createOrder, saveOrder } from '@/data/repo/orders'
 import { isDay, madridDateTimeToUtcIso, todayMadrid, utcIsoToMadridTime } from '@/lib/dates'
 import { nameKey } from '@shared/nameKey'
@@ -16,6 +17,7 @@ import { CustomerPicker } from '@/components/orders/CustomerPicker'
 import {
   draftFromItem,
   draftToInput,
+  toSaveItem,
   emptyDraft,
   type ItemDraft,
 } from '@/components/orders/ItemEditorRow'
@@ -94,6 +96,10 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
   const [drafts, setDrafts] = useState<ItemDraft[]>(() =>
     detail && detail.items.length > 0 ? detail.items.map(draftFromItem) : [emptyDraft()],
   )
+  // How each stored item looked when the form opened, to save only what the user changes.
+  const [originals] = useState(
+    () => new Map((detail?.items ?? []).map((i) => [i.id, draftFromItem(i)])),
+  )
   const [error, setError] = useState<FormError | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
@@ -106,7 +112,7 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
     const used = drafts.filter((d) => !isBlankDraft(d))
     const unnamed = used.some((d) => d.name.trim() === '')
     const named = used.filter((d) => d.name.trim() !== '')
-    const converted = named.map(draftToInput)
+    const converted = named.map((d) => toSaveItem(d, d.id ? originals.get(d.id) : undefined))
     let failed: 'weight' | 'price' | null = null
     for (const r of converted) {
       if ('error' in r) {
@@ -134,7 +140,8 @@ function OrderForm({ detail, initialDay }: { detail?: DayOrder; initialDay: stri
         notes,
       }
       if (order) await saveOrder(order.id, fields, items)
-      else await createOrder(fields, items)
+      // A new order has no stored items: every item is complete.
+      else await createOrder(fields, items as ItemInput[])
       back(day)
     } catch {
       setError('save')

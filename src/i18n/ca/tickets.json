@@ -30,6 +30,7 @@
     "save": "Desa",
     "saving": "Desant…",
     "cancel": "Cancel·la",
+    "currency": "€",
     "errorCustomer": "Indica el client",
     "errorAmount": "Indica un import vàlid",
     "errorSave": "No s'ha pogut desar el ticket"

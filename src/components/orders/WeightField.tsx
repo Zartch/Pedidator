@@ -108,7 +108,7 @@ export function WeightField({ label, text, unit, onChange, onEnter, inputId }: P
               onClick={() => switchUnit(u)}
               className="min-h-[39px] min-w-11 cursor-pointer rounded-sm border-0 bg-transparent px-3 font-semibold text-ink-muted aria-pressed:bg-brand-soft aria-pressed:text-brand-strong aria-pressed:shadow-[inset_0_0_0_1.5px_var(--brand-strong)]"
             >
-              {u}
+              {t(`weight.${u}`)}
             </button>
           ))}
         </div>

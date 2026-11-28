@@ -492,6 +492,7 @@ Todos los pasos de este bloque leen `docs/POCKETBASE.md` entero.
   1. Vaciar la outbox en orden, por lotes de 50, solo operaciones del usuario actual. Tratar cada `status`: `ok`/`merged` → quitar de la outbox y actualizar `version`; `mergedInto` → reasignar registros locales y operaciones pendientes al id existente y eliminar el duplicado local; `conflict` → mover a `conflicts` y retener las operaciones posteriores del mismo registro; `forbidden`/`invalid`/`id_taken` → mover a `conflicts` como error no resoluble (solo "Descartar").
   2. Tras aceptar un registro con foto pendiente, subirla desde `blobs`.
   3. Activar `syncEnabled` fuera del modo demo.
+  3b. Productos del relleno local de la versión 2 de Dexie (F1-11: `version: 0`, sin operación en la outbox): al activar la sincronización, encolar un `create` por cada uno antes de vaciar la outbox (si el servidor ya tiene ese `nameKey`, responde `mergedInto` y se reasigna como cualquier duplicado). Con test. _(Hallazgo de la revisión de código de G1.)_
   4. Pantalla de conflictos mínima: quién y cuándo, campos tuyo/actual, "Descartar el mío" y "Sobrescribir".
 - **Hecho cuando:** `npm run check && npm run test:integration` pasan (crear, editar, fusión automática, conflicto con nombre del otro usuario, descartar, sobrescribir).
 

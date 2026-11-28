@@ -12,7 +12,7 @@ import '@/i18n'
 import { closeSession, requireSession, startSession } from '@/data/session'
 import { getOrCreateCustomerByName } from '@/data/repo/customers'
 import { createOrder } from '@/data/repo/orders'
-import { getOrderItems } from '@/data/repo/orderItems'
+import { getOrderItems, setItemDone } from '@/data/repo/orderItems'
 import { createProduct } from '@/data/repo/products'
 import { madridDateTimeToUtcIso, todayMadrid } from '@/lib/dates'
 import OrderFormPage from './OrderFormPage'
@@ -319,5 +319,28 @@ describe('OrderFormPage review fixes', () => {
     await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/day/2030-05-17'))
     const items = await allItems()
     expect(items.find((i) => i.id === a.items[0].id)?.name).toBe('ItemA')
+  })
+
+  it('saving only the notes keeps an item marked as done elsewhere after the form opened', async () => {
+    const { order, items } = await seed('Marta', 'Pollastre')
+    renderAt(`/orders/${order.id}`)
+    await screen.findAllByLabelText('Article')
+    await setItemDone(items[0].id, true)
+    fireEvent.change(screen.getByLabelText('Notes'), { target: { value: 'sense pell' } })
+    save()
+    await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/day/2030-05-17'))
+    const stored = (await allItems()).find((i) => i.id === items[0].id)
+    expect(stored?.notes).toBe('sense pell')
+    expect(stored?.done).toBe(true)
+  })
+
+  it('a done change made in the form is still saved', async () => {
+    const { order, items } = await seed('Marta', 'Pollastre')
+    renderAt(`/orders/${order.id}`)
+    await screen.findAllByLabelText('Article')
+    fireEvent.click(screen.getByRole('switch', { name: 'Preparat' }))
+    save()
+    await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/day/2030-05-17'))
+    expect((await allItems()).find((i) => i.id === items[0].id)?.done).toBe(true)
   })
 })

@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react'
 import { formatMoney } from '@shared/format'
 import { usePendingTickets } from '@/data/hooks'
 import { markTicketPaid } from '@/data/repo/tickets'
+import { useActionRunner } from '@/components/ui/ActionError'
 import { Button } from '@/components/ui/Button'
 import { TicketGroup } from '@/components/tickets/TicketGroup'
 import { TicketDialog } from '@/components/tickets/TicketDialog'
@@ -22,6 +23,7 @@ export default function TicketsPage() {
   const groups = usePendingTickets()
   const [creating, setCreating] = useState(false)
   const [viewing, setViewing] = useState<string | null>(null)
+  const { run, alert } = useActionRunner()
 
   const sorted = groups
     ? [...groups].sort((a, b) =>
@@ -106,10 +108,12 @@ export default function TicketsPage() {
             key={group.customer?.id ?? group.tickets[0].customer}
             group={group}
             locale={locale}
-            onMarkPaid={(id) => void markTicketPaid(id)}
+            onMarkPaid={(id) => run(() => markTicketPaid(id))}
             onOpenPhoto={setViewing}
           />
         ))}
+
+        {alert}
 
         <div className="sticky bottom-0 -mx-4 mt-auto border-t border-line bg-surface px-4 py-3 tablet:-mx-6 tablet:px-6">
           <Button variant="primary" size="lg" block onClick={() => setCreating(true)}>

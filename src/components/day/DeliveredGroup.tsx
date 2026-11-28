@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp, PackageCheck, Undo2 } from 'lucide-react'
+import { useActionRunner } from '@/components/ui/ActionError'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { reopenOrder } from '@/data/repo/orders'
@@ -13,6 +14,7 @@ export function DeliveredGroup({ orders }: { orders: DayOrder[] }) {
   const { t } = useTranslation('day')
   const [open, setOpen] = useState(false)
   const panelId = useId()
+  const { run, alert } = useActionRunner()
   if (orders.length === 0) return null
   const Chevron = open ? ChevronUp : ChevronDown
 
@@ -48,7 +50,7 @@ export function DeliveredGroup({ orders }: { orders: DayOrder[] }) {
               </Link>
               <Button
                 className="self-end"
-                onClick={() => void reopenOrder(order.id)}
+                onClick={() => run(() => reopenOrder(order.id))}
               >
                 <Undo2 className="size-5" aria-hidden="true" />
                 {t('deliveredGroup.reopen')}
@@ -57,6 +59,7 @@ export function DeliveredGroup({ orders }: { orders: DayOrder[] }) {
           ))}
         </ul>
       )}
+      {alert}
     </section>
   )
 }
